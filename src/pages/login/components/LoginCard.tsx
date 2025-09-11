@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import Swal from "sweetalert2";
 import {
   Card,
   CardHeader,
@@ -35,7 +36,6 @@ export function LoginCard({
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-    setError,
     watch,
     setValue,
   } = useForm<LoginUser>({
@@ -55,28 +55,21 @@ export function LoginCard({
     });
   }, [setValue]);
 
-  const onSubmit = handleSubmit(async (data) => {
+  const onSubmit = handleSubmit(async ({ username, password, remember }) => {
     try {
-      const parsed: LoginUser = loginUserSchema.parse(data);
+      await login({ username: username.trim(), password, remember });
 
-      await login({
-        username: parsed.username.trim(),
-        password: parsed.password,
-        remember: parsed.remember,
-      });
-
-      if (parsed.remember) {
-        localStorage.setItem("cf.remember", "1");
-      } else {
-        localStorage.removeItem("cf.remember");
-      }
-
+      if (remember) localStorage.setItem("cf.remember", "1");
+      else localStorage.removeItem("cf.remember");
       navigate("/");
     } catch (err: any) {
-      setError("root", {
-        message:
-          err?.response?.data?.message ??
-          "Login failed. Please check your credentials.",
+      const msg =
+        err?.message ?? "Login failed. Please check your credentials.";
+      await Swal.fire({
+        icon: "error",
+        title: "Login failed",
+        text: msg,
+        confirmButtonText: "OK",
       });
     }
   });
@@ -176,11 +169,6 @@ export function LoginCard({
             />
             <span className="text-muted-foreground">Remember me</span>
           </label>
-
-          {/* Root/server error */}
-          {errors.root?.message && (
-            <p className="text-sm text-destructive">{errors.root.message}</p>
-          )}
 
           <Button type="submit" className="h-11 w-full" disabled={isSubmitting}>
             {isSubmitting ? "Signing in…" : "Login"}

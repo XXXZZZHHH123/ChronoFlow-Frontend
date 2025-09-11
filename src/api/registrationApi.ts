@@ -1,4 +1,5 @@
 import { http } from "@/lib/http";
+import { unwrap } from "@/lib/utils";
 import type {
   MemberCompleteRegistration,
   MemberLookup,
@@ -7,7 +8,6 @@ import type {
 } from "@/lib/validation/schema";
 
 export async function registerOrganizer(input: OrganizerRegistration) {
-  console.log("Registering organizer with input:", input);
   const payload = {
     name: input.name,
     username: input.user_name,
@@ -17,8 +17,9 @@ export async function registerOrganizer(input: OrganizerRegistration) {
     organizationName: input.organisation_name,
     organizationAddress: input.organisation_address,
   };
+
   const res = await http.post("/system/reg/organizer", payload);
-  return res.data;
+  return unwrap(res.data);
 }
 
 export async function registerMember(input: MemberCompleteRegistration) {
@@ -30,7 +31,7 @@ export async function registerMember(input: MemberCompleteRegistration) {
   };
 
   const res = await http.post("/system/reg/member", payload);
-  return res.data;
+  return unwrap(res.data);
 }
 
 export async function getTenantMemberInfo(
@@ -42,8 +43,7 @@ export async function getTenantMemberInfo(
   };
 
   const res = await http.post("/system/reg/search", payload);
-
-  const body = res?.data?.data as any;
+  const body = unwrap(res.data) as any;
 
   return {
     organisation_name: body.organizationName,

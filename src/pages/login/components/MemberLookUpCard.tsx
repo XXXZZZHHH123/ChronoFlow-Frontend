@@ -34,16 +34,7 @@ export function MemberLookupCard({ onBack, onSearch }: MemberLookupCardProps) {
   });
 
   const submit = handleSubmit(async (values) => {
-    try {
-      await onSearch(values);
-    } catch (e: any) {
-      await Swal.fire({
-        icon: "error",
-        title: "Lookup failed",
-        text: "User data cannot be found.",
-        confirmButtonText: "OK",
-      });
-    }
+    await onSearch(values);
   });
 
   return (

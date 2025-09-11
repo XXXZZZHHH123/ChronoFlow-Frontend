@@ -38,7 +38,6 @@ export function MemberRegistrationCard({
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-    setError,
     reset,
   } = useForm<MemberCompleteRegistration>({
     resolver: zodResolver(memberCompleteRegistrationSchema),
@@ -59,13 +58,11 @@ export function MemberRegistrationCard({
         text: "Your member account has been created.",
         confirmButtonText: "OK",
       });
+
       reset();
+      onBack();
     } catch (err: any) {
-      const msg =
-        err?.response?.data?.message ??
-        err?.message ??
-        "Registration failed. Please try again.";
-      setError("root", { message: msg });
+      const msg = err?.message ?? "Registration failed. Please try again.";
       await Swal.fire({
         icon: "error",
         title: "Registration failed",

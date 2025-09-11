@@ -7,6 +7,7 @@ import { RegistrationSelectionCard } from "./components/RegistrationSelectionCar
 import { MemberRegistrationCard } from "./components/MemberRegistrationCard";
 import { useMemberInvite } from "./hooks/useMemberInvite";
 import { MemberLookupCard } from "./components/MemberLookUpCard";
+import Swal from "sweetalert2";
 
 const points = [
   "Lightweight planning for internal workshops, symposiums, and team celebrations.",
@@ -56,9 +57,12 @@ export default function LoginPage() {
     lookup,
     fromInviteLink,
     userId,
+    err: prefillErr,
+    clearInvite,
   } = useMemberInvite();
 
   const onBack = () => {
+    clearInvite();
     setView("login");
   };
 
@@ -83,6 +87,16 @@ export default function LoginPage() {
       setView("signup-member");
     }
   }, [fromInviteLink]);
+
+  useEffect(() => {
+    if (!prefillErr) return;
+    void Swal.fire({
+      icon: "error",
+      title: "Invitation lookup failed",
+      text: prefillErr,
+      confirmButtonText: "OK",
+    });
+  }, [prefillErr]);
 
   return (
     <div className="relative grid min-h-svh overflow-hidden bg-background lg:grid-cols-[60%_40%]">

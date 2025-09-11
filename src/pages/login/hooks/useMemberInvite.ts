@@ -10,6 +10,7 @@ export type UseMemberInviteType = {
   lookup: (params: MemberLookup) => Promise<MemberPrefill>;
   fromInviteLink: boolean;
   userId: string | null;
+  clearInvite: () => void;
 };
 
 export function useMemberInvite(): UseMemberInviteType {
@@ -26,22 +27,16 @@ export function useMemberInvite(): UseMemberInviteType {
       try {
         const result = await getTenantMemberInfo({ organisation_id, user_id });
 
-        const { organisation_name, email } = result;
-
-        if (!organisation_name || !email) {
-          throw new Error("User data cannot be found.");
-        }
-
         const p: MemberPrefill = {
-          organisation_name,
-          email,
+          organisation_name: result.organisation_name,
+          email: result.email,
         };
 
         setPrefill(p);
         setUserId(user_id);
         return p;
       } catch (e: any) {
-        const msg = e?.response?.data?.message ?? e?.message ?? "Lookup failed";
+        const msg = e?.message ?? "Lookup failed";
         setErr(msg);
         setPrefill(null);
         throw new Error(msg);
@@ -51,6 +46,12 @@ export function useMemberInvite(): UseMemberInviteType {
     },
     []
   );
+
+  const clearInvite = useCallback(() => {
+    setPrefill(null);
+    setUserId(null);
+    setErr(null);
+  }, []);
 
   useEffect(() => {
     const eid = params.get("organisation_id");
@@ -69,5 +70,5 @@ export function useMemberInvite(): UseMemberInviteType {
     params.get("organisation_id") && params.get("user_id")
   );
 
-  return { prefill, loading, err, lookup, fromInviteLink, userId };
+  return { prefill, loading, err, lookup, fromInviteLink, userId, clearInvite };
 }

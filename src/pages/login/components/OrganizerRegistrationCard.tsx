@@ -39,7 +39,6 @@ export function OrganizerRegistrationCard({
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-    setError,
     reset,
   } = useForm<OrganizerRegistration>({
     resolver: zodResolver(organizerRegistrationSchema),
@@ -48,7 +47,6 @@ export function OrganizerRegistrationCard({
 
   const onSubmit = handleSubmit(async (values) => {
     try {
-      
       await registerOrganizer(values);
 
       await Swal.fire({
@@ -59,12 +57,7 @@ export function OrganizerRegistrationCard({
       });
       reset();
     } catch (err: any) {
-      const msg =
-        err?.response?.data?.message ??
-        err?.message ??
-        "Registration failed. Please try again.";
-
-      setError("root", { message: msg });
+      const msg = err?.message ?? "Registration failed. Please try again.";
 
       await Swal.fire({
         icon: "error",
@@ -74,7 +67,6 @@ export function OrganizerRegistrationCard({
       });
     }
   });
-
   return (
     <Card className="w-full max-w-3xl">
       <CardHeader className="text-center">
