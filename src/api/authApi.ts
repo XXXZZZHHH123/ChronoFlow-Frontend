@@ -1,4 +1,4 @@
-import { useAuthStore } from "@/lib/auth-store";
+import { useAuthStore } from "@/stores/auth-store";
 import { http } from "@/lib/http";
 import type { User, AuthCredentials } from "@/lib/auth-type";
 import type { LoginUser } from "@/lib/validation/schema";
