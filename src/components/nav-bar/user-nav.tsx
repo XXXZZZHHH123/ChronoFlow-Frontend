@@ -18,8 +18,6 @@ import { logout } from "@/api/authApi";
 export function UserNav() {
   const { user } = useAuthStore();
 
-  console.log("UserNav user:", user);
-
   return (
     <DropdownMenu>
       <TooltipProvider disableHoverableContent>

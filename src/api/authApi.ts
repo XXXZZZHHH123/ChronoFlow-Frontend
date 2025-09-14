@@ -2,8 +2,8 @@ import { useAuthStore } from "@/stores/auth-store";
 import { http } from "@/lib/http";
 import type { User, AuthCredentials } from "@/lib/auth-type";
 import type { LoginUser } from "@/lib/validation/schema";
-import type { ApiResponse } from "@/lib/type";
 import { unwrap } from "@/lib/utils";
+
 
 let refreshing: Promise<boolean> | null = null;
 
@@ -16,14 +16,12 @@ function setAuthFromServer(payload: AuthCredentials) {
 }
 
 export async function login(credentials: LoginUser) {
-  const res = await http.post<ApiResponse<{ user: User }>>(
-    "/system/auth/login",
-    credentials
-  );
-  const data = unwrap(res.data);
-  if (data?.user) {
+  const res = await http.post("/system/auth/login", credentials);
+  const data = unwrap(res.data) as any;
+  if (data.user) {
     setAuthFromServer({ user: data.user });
   }
+
   return data;
 }
 

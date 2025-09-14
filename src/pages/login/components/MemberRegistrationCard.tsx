@@ -100,7 +100,7 @@ export function MemberRegistrationCard({
           <div className="grid gap-2 md:col-span-1">
             <Label>Organization Name</Label>
             <Input
-              value={prefill.organisation_name}
+              value={prefill.organization_name}
               readOnly
               className="h-10 bg-muted cursor-default"
             />

@@ -48,7 +48,7 @@ type View =
 
 export default function LoginPage() {
   const [view, setView] = useState<View>("login");
-  const bg = `${import.meta.env.BASE_URL}chrono_flow_login_bg.png`;
+  const bg = `${import.meta.env.BASE_URL}images/chrono_flow_login_bg.png`;
   const reduceMotion = useReducedMotion();
 
   const {

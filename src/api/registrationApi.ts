@@ -6,11 +6,17 @@ import type {
   MemberPrefill,
   OrganizerRegistration,
 } from "@/lib/validation/schema";
+import {
+  MemberPrefillResponseSchema,
+  type MemberPrefillResponse,
+} from "@/lib/validation/schema";
 
-export async function registerOrganizer(input: OrganizerRegistration) {
+export async function registerOrganizer(
+  input: OrganizerRegistration
+): Promise<boolean> {
   const payload = {
     name: input.name,
-    username: input.user_name,
+    username: input.username,
     userPassword: input.user_password,
     userEmail: input.user_email,
     mobile: input.user_mobile,
@@ -19,10 +25,12 @@ export async function registerOrganizer(input: OrganizerRegistration) {
   };
 
   const res = await http.post("/system/reg/organizer", payload);
-  return unwrap(res.data);
+  return unwrap<boolean>(res.data);
 }
 
-export async function registerMember(input: MemberCompleteRegistration) {
+export async function registerMember(
+  input: MemberCompleteRegistration
+): Promise<boolean> {
   const payload = {
     userId: Number(input.user_id),
     username: input.user_name,
@@ -31,7 +39,7 @@ export async function registerMember(input: MemberCompleteRegistration) {
   };
 
   const res = await http.post("/system/reg/member", payload);
-  return unwrap(res.data);
+  return unwrap<boolean>(res.data);
 }
 
 export async function getTenantMemberInfo(
@@ -43,10 +51,11 @@ export async function getTenantMemberInfo(
   };
 
   const res = await http.post("/system/reg/search", payload);
-  const body = unwrap(res.data) as any;
+  const raw = unwrap<MemberPrefillResponse>(res.data);
+  const body = MemberPrefillResponseSchema.parse(raw);
 
   return {
-    organisation_name: body.organizationName,
+    organization_name: body.organizationName,
     email: body.email,
   };
 }

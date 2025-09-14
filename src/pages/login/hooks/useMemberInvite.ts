@@ -25,12 +25,10 @@ export function useMemberInvite(): UseMemberInviteType {
       setLoading(true);
       setErr(null);
       try {
-        const result = await getTenantMemberInfo({ organisation_id, user_id });
-
-        const p: MemberPrefill = {
-          organisation_name: result.organisation_name,
-          email: result.email,
-        };
+        const p: MemberPrefill = await getTenantMemberInfo({
+          organisation_id,
+          user_id,
+        });
 
         setPrefill(p);
         setUserId(user_id);

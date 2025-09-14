@@ -24,7 +24,7 @@ type OrganizerRegistrationFormProps = {
 
 const defaultValues: DefaultValues<OrganizerRegistration> = {
   name: "",
-  user_name: "",
+  username: "",
   user_password: "",
   user_email: "",
   user_mobile: "",
@@ -108,12 +108,12 @@ export function OrganizerRegistrationCard({
           <div className="grid gap-2 md:col-span-1">
             <Label htmlFor="user_name">Username</Label>
             <Input
-              id="user_name"
-              {...register("user_name")}
-              aria-invalid={!!errors.user_name}
+              id="username"
+              {...register("username")}
+              aria-invalid={!!errors.username}
             />
             <p className="h-5 text-sm leading-5 text-destructive">
-              {errors.user_name?.message ?? "\u00A0"}
+              {errors.username?.message ?? "\u00A0"}
             </p>
           </div>
 

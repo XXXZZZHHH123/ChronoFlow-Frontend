@@ -1,6 +1,7 @@
 import { CalendarDays, type LucideIcon, UserLock, Users } from "lucide-react";
 import { useAuthStore } from "../stores/auth-store";
 import { useEventStore } from "@/stores/event-store";
+import { hasAnyRole, normalizeRoles, type Role } from "./shared/role";
 
 export type Submenu = { href: string; label: string; active: boolean };
 export type Menu = {
@@ -15,15 +16,18 @@ export type Group = { groupLabel: string; menus: Menu[] };
 export function getMenuList(pathname: string): Group[] {
   const { user } = useAuthStore();
   const { selected_event_id } = useEventStore();
-  const hasRole = user?.role !== undefined;
 
-  if (!hasRole) {
+  if (!user) {
     return [];
   }
 
-  const isOrganizer = user?.role === "ORGANIZER";
-  const isManager = user?.role === "MANAGER";
-  const isStaff = user?.role === "STAFF";
+  const roles: Role[] = normalizeRoles(user.role ?? []);
+
+  if (roles.length === 0) return [];
+
+  const isOrganizer = hasAnyRole(roles, "ORGANIZER");
+  const isManager = hasAnyRole(roles, "MANAGER");
+  const isStaff = hasAnyRole(roles, "STAFF");
   const isEventSelected = selected_event_id !== null;
 
   if (isOrganizer && !isEventSelected) {

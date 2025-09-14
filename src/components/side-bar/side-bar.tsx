@@ -1,9 +1,9 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu } from "@/components/side-bar/menu";
-import { cn } from "@/lib/utils";
 import { useSidebarToggle } from "@/hooks/use-side-bar-toggle";
 import { SidebarToggle } from "./side-bar-toggle";
+import { cn } from "@/lib/utils";
 
 export function Sidebar() {
   const isOpen = useSidebarToggle((s) => s.isOpen);
