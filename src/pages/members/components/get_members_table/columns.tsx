@@ -63,13 +63,6 @@ export const MemberColumns = (
     enableHiding: false,
   },
   {
-    accessorKey: "id",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="ID" />
-    ),
-    cell: ({ row }) => <div>{row.getValue("id") ?? ""}</div>,
-  },
-  {
     accessorKey: "name",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Name" />
@@ -92,7 +85,7 @@ export const MemberColumns = (
   },
   {
     id: "role_keys",
-    accessorFn: (row) => mapRoleIdsToKeys(row.roles),
+    accessorFn: (row) => mapRoleIdsToKeys(row.roles.map(Number)),
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Roles" />
     ),
