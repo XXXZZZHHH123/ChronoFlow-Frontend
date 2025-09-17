@@ -39,12 +39,15 @@ export const MemberColumns = (
             confirmButtonText: "OK",
           });
           await onRefresh();
-        } catch (err: any) {
+        } catch (err: unknown) {
+          const msg =
+            err instanceof Error
+              ? err.message
+              : "Unable to delete the member. Please try again.";
           await Swal.fire({
             icon: "error",
             title: "Delete failed",
-            text:
-              err?.message ?? "Unable to delete the member. Please try again.",
+            text: msg,
             confirmButtonText: "OK",
           });
         }

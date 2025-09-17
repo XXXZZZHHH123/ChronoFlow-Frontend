@@ -36,7 +36,7 @@ import CreateMemberSheet from "../MemberConfigForm";
 import { useMemo } from "react";
 
 type MembersTableProps = {
-  columns: ColumnDef<Member, any>[];
+  columns: ColumnDef<Member, unknown>[];
   data: Member[];
   onRefresh: () => void;
 };
@@ -75,19 +75,16 @@ export default function MembersTable({
 
   const allTableData = useMemo(() => {
     return table.getFilteredRowModel().rows.map((row) => row.original);
-  }, [table.getFilteredRowModel().rows]);
+  }, [table]);
 
   const excelExportData = useMemo(() => {
-    if (!allTableData) return [];
-    return allTableData.map((item: Member) => {
-      return {
-        Name: item.name,
-        Email: item.email,
-        Phone: item.phone,
-        Roles: mapOrgMemberRoleIdsToKeys(item.roles).join(", "),
-        Registered: item.registered ? "Yes" : "No",
-      };
-    });
+    return allTableData.map((item) => ({
+      Name: item.name,
+      Email: item.email,
+      Phone: item.phone,
+      Roles: mapOrgMemberRoleIdsToKeys(item.roles).join(", "),
+      Registered: item.registered ? "Yes" : "No",
+    }));
   }, [allTableData]);
 
   return (

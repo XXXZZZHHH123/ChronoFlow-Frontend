@@ -9,4 +9,4 @@ class ResizeObserver {
   unobserve() {}
   disconnect() {}
 }
-(globalThis as any).ResizeObserver = ResizeObserver;
+globalThis.ResizeObserver = ResizeObserver;

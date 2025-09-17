@@ -33,8 +33,8 @@ export function useMemberInvite(): UseMemberInviteType {
         setPrefill(p);
         setUserId(user_id);
         return p;
-      } catch (e: any) {
-        const msg = e?.message ?? "Lookup failed";
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : "Lookup failed";
         setErr(msg);
         setPrefill(null);
         throw new Error(msg);
@@ -60,10 +60,11 @@ export function useMemberInvite(): UseMemberInviteType {
       try {
         await lookup({ organisation_id: eid, user_id: uid });
         setUserId(uid);
-      } catch {}
+      } catch {
+        // Ignore errors: handled by lookup
+      }
     })();
   }, [params, lookup]);
-
   const fromInviteLink = !!(
     params.get("organisation_id") && params.get("user_id")
   );

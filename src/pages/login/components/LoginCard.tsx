@@ -58,9 +58,11 @@ export function LoginCard({ onRegistrationSelection }: LoginCardProps) {
       if (remember) localStorage.setItem("cf.remember", "1");
       else localStorage.removeItem("cf.remember");
       navigate("/");
-    } catch (err: any) {
+    } catch (err: unknown) {
       const msg =
-        err?.message ?? "Login failed. Please check your credentials.";
+        err instanceof Error
+          ? err.message
+          : "Login failed. Please check your credentials.";
       await Swal.fire({
         icon: "error",
         title: "Login failed",

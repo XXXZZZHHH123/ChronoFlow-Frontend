@@ -98,8 +98,11 @@ export default function MemberConfigFormSheet({
       reset({ email: "", roleIds: [], remark: "" });
       setOpen(false);
       onRefresh();
-    } catch (err: any) {
-      const msg = err?.message ?? "Operation failed. Please try again.";
+    } catch (err: unknown) {
+      const msg =
+        err instanceof Error
+          ? err.message
+          : "Operation failed. Please try again.";
       await Swal.fire({
         icon: "error",
         title: isEdit ? "Update failed" : "Creation failed",
@@ -156,7 +159,9 @@ export default function MemberConfigFormSheet({
                   const selected = new Set(field.value ?? []);
                   const selectedLabels = (field.value ?? [])
                     .map(
-                      (id) => ORG_MEMBER_ROLE_OPTIONS.find((opt) => opt.id === id)?.label
+                      (id) =>
+                        ORG_MEMBER_ROLE_OPTIONS.find((opt) => opt.id === id)
+                          ?.label
                     )
                     .filter(Boolean);
 
@@ -202,9 +207,11 @@ export default function MemberConfigFormSheet({
                                       value={opt.label}
                                       onSelect={() => {
                                         const next = new Set(field.value ?? []);
-                                        checked
-                                          ? next.delete(opt.id)
-                                          : next.add(opt.id);
+                                        if (checked) {
+                                          next.delete(opt.id);
+                                        } else {
+                                          next.add(opt.id);
+                                        }
                                         field.onChange(Array.from(next));
                                       }}
                                       className="cursor-pointer"
@@ -216,9 +223,11 @@ export default function MemberConfigFormSheet({
                                           const next = new Set(
                                             field.value ?? []
                                           );
-                                          checked
-                                            ? next.delete(opt.id)
-                                            : next.add(opt.id);
+                                          if (checked) {
+                                            next.delete(opt.id);
+                                          } else {
+                                            next.add(opt.id);
+                                          }
                                           field.onChange(Array.from(next));
                                         }}
                                       />

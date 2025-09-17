@@ -49,8 +49,9 @@ export default function BulkMemberUploadSheet({
       const res = await uploadMembersExcel(file);
       setResult(res);
       setResultDialogOpen(true);
-    } catch (e: any) {
-      setErr(e?.message ?? "Upload failed");
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Upload failed";
+      setErr(msg);
       setResultDialogOpen(true);
     } finally {
       setSubmitting(false);

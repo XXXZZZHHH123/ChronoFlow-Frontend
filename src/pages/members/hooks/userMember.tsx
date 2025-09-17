@@ -13,8 +13,12 @@ export function useMembers(autoFetch: boolean = true) {
     try {
       const data = await getMembers();
       setMembers(data);
-    } catch (e: any) {
-      setError(e?.message ?? "Failed to load members");
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        setError(e.message);
+      } else {
+        setError("Failed to load members");
+      }
       setMembers([]);
     } finally {
       setLoading(false);
