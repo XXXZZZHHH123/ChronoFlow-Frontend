@@ -4,7 +4,6 @@ import type { User, AuthCredentials } from "@/lib/auth-type";
 import type { LoginUser } from "@/lib/validation/schema";
 import { unwrap } from "@/lib/utils";
 
-
 let refreshing: Promise<boolean> | null = null;
 
 function setAuthFromServer(payload: AuthCredentials) {
@@ -21,7 +20,6 @@ export async function login(credentials: LoginUser) {
   if (data.user) {
     setAuthFromServer({ user: data.user });
   }
-
   return data;
 }
 

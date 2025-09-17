@@ -33,7 +33,7 @@ import {
   type MemberConfig,
   type Member,
 } from "@/lib/validation/schema";
-import { ROLE_ID_TO_NAME, ROLE_OPTIONS } from "@/lib/shared/role";
+import { ORG_MEMBER_ROLE_OPTIONS } from "@/lib/shared/role";
 import { createMember, updateMember } from "@/api/memberApi";
 import Swal from "sweetalert2";
 
@@ -67,7 +67,7 @@ export default function MemberConfigFormSheet({
     if (isEdit && member) {
       form.reset({
         email: member.email,
-        roleIds: member.roles ? member.roles.map((id) => Number(id)) : [],
+        roleIds: member.roles ?? [],
         remark: "",
       });
     } else {
@@ -155,7 +155,9 @@ export default function MemberConfigFormSheet({
                 render={({ field }) => {
                   const selected = new Set(field.value ?? []);
                   const selectedLabels = (field.value ?? [])
-                    .map((id) => ROLE_ID_TO_NAME[id])
+                    .map(
+                      (id) => ORG_MEMBER_ROLE_OPTIONS.find((opt) => opt.id === id)?.label
+                    )
                     .filter(Boolean);
 
                   return (
@@ -192,7 +194,7 @@ export default function MemberConfigFormSheet({
                             <CommandList>
                               <CommandEmpty>No roles found.</CommandEmpty>
                               <CommandGroup>
-                                {ROLE_OPTIONS.map((opt) => {
+                                {ORG_MEMBER_ROLE_OPTIONS.map((opt) => {
                                   const checked = selected.has(opt.id);
                                   return (
                                     <CommandItem

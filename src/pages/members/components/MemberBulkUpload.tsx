@@ -84,8 +84,8 @@ export default function BulkMemberUploadSheet({
             </li>
             <li>
               Role ID mapping: <span className="font-mono">2 = ORGANIZER</span>,{" "}
-              <span className="font-mono">3 = MANAGER</span>,{" "}
-              <span className="font-mono">4 = STAFF</span>.
+              <span className="font-mono">3 = STAFF</span>,{" "}
+              <span className="font-mono">4 = MANAGER</span>.
             </li>
             <li>Accepted file types: .xlsx / .xls</li>
           </ul>

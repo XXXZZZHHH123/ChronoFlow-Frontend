@@ -80,18 +80,6 @@ export function getMenuList(pathname: string): Group[] {
           },
         ],
       },
-      {
-        groupLabel: "Member Administration",
-        menus: [
-          {
-            href: "/members",
-            label: "Member",
-            active: pathname === "/members",
-            submenus: [],
-            icon: Users,
-          },
-        ],
-      },
     ];
   }
 

@@ -1,67 +1,86 @@
-export type Role = "ORGANIZER" | "MANAGER" | "STAFF";
+export type Role = "ORGANIZER" | "MANAGER" | "STAFF" | "ADMIN";
 
-//Role normalization for session data
+export const SYS_MEMBER_ROLE_MAP = {
+  "1": "ADMIN",
+  "2": "ORGANIZER",
+  "3": "STAFF",
+  "4": "MANAGER",
+} as const satisfies Record<string, Role>;
+
+export type SysMemberRoleId = keyof typeof SYS_MEMBER_ROLE_MAP;
+
+// for profile display for system
 export function normalizeRoles(input?: string | string[] | null): Role[] {
   if (!input) return [];
 
-  const arr = Array.isArray(input) ? input : [input];
-
-  const flattened = arr
+  const tokens = (Array.isArray(input) ? input : [input])
     .flatMap((r) => r.split(","))
-    .map((r) => r.trim().toUpperCase())
+    .map((r) => r.trim())
     .filter(Boolean);
 
-  const set = new Set(flattened);
+  const out = new Set<Role>();
 
-  const out: Role[] = [];
-  set.forEach((r) => {
-    if (r === "ORGANIZER" || r === "MANAGER" || r === "STAFF") {
-      out.push(r);
+  for (const t of tokens) {
+    if (t in SYS_MEMBER_ROLE_MAP) {
+      out.add(SYS_MEMBER_ROLE_MAP[t as SysMemberRoleId]);
+      continue;
     }
-  });
+    const upper = t.toUpperCase();
 
-  return out;
+    if (
+      upper === "ADMIN" ||
+      upper === "ORGANIZER" ||
+      upper === "STAFF" ||
+      upper === "MANAGER"
+    ) {
+      out.add(upper as Role);
+    }
+  }
+  return Array.from(out);
 }
 
+// Role checking for dynamic menu for system
 export function hasAnyRole(userRoles: Role[] | undefined, ...need: Role[]) {
-  if (!userRoles?.length) return false;
-  return userRoles.some((r) => need.includes(r));
+  return !!userRoles?.some((r) => need.includes(r));
 }
 
-//Role transformation
-export const ROLE_MAP: Record<number, string> = {
-  1: "ADMIN",
-  2: "ORGANIZER",
-  3: "MANAGER",
-  4: "STAFF",
-};
+// For organisation members
+export const ORG_MEMBER_ROLE_MAP = {
+  "2": "ORGANIZER",
+  "3": "STAFF",
+  "4": "MANAGER",
+} as const satisfies Record<string, Role>;
 
-export function mapRoleIdsToKeys(roleIds: number[]): string[] {
-  return roleIds.map((id) => ROLE_MAP[id] ?? `UNKNOWN(${id})`);
+export type OrgMemberRoleId = keyof typeof ORG_MEMBER_ROLE_MAP;
+
+// Transform ID array
+export function mapOrgMemberRoleIdsToKeys(roleIds: readonly string[]): Role[] {
+  const out = new Set<Role>();
+  for (const id of roleIds ?? []) {
+    const role = ORG_MEMBER_ROLE_MAP[id as OrgMemberRoleId];
+    if (role) out.add(role);
+  }
+  return Array.from(out);
 }
 
-export function mapRoleIdToKey(roleId: number): string {
-  return ROLE_MAP[roleId] ?? `UNKNOWN(${roleId})`;
+export function mapOrgMemberRoleIdToKey(
+  roleId: string
+): Role | `UNKNOWN(${string})` {
+  return ORG_MEMBER_ROLE_MAP[roleId as OrgMemberRoleId] ?? `UNKNOWN(${roleId})`;
 }
 
-//Role Filtering
-export const ROLE_KEYS = ["ADMIN", "ORGANIZER", "MANAGER", "STAFF"] as const;
+// Derived keys
+export const ORG_MEMBER_ROLE_KEYS = Object.values(
+  ORG_MEMBER_ROLE_MAP
+) as Role[];
 
-export function roleFilterOptions(): { label: string; value: string }[] {
-  return ROLE_KEYS.map((k) => ({ label: k, value: k }));
+// Filter options for UI
+export function orgMemberRoleFilterOptions(): { label: Role; value: Role }[] {
+  return ORG_MEMBER_ROLE_KEYS.map((k) => ({ label: k, value: k }));
 }
 
-//Role Options for UI
-export const ROLE_ID_TO_NAME: Record<number, string> = {
-  1: "ADMIN",
-  2: "ORGANIZER",
-  3: "MANAGER",
-  4: "STAFF",
-};
-
-export const ROLE_OPTIONS = Object.entries(ROLE_ID_TO_NAME).map(
-  ([id, label]) => ({
-    id: Number(id),
-    label,
-  })
-);
+// Options list that preserves string IDs
+export type OrgMemberRoleOption = { id: OrgMemberRoleId; label: Role };
+export const ORG_MEMBER_ROLE_OPTIONS: OrgMemberRoleOption[] = (
+  Object.entries(ORG_MEMBER_ROLE_MAP) as [OrgMemberRoleId, Role][]
+).map(([id, label]) => ({ id, label }));

@@ -38,7 +38,7 @@ export default function AppLayout() {
         />
 
         <div className="relative z-0 flex min-w-0 grow flex-col">
-          <Navbar brand="Chrono Flow First Customer" />
+          <Navbar brand="Current user organisation name" />
           <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6">
             <Outlet />
           </div>
