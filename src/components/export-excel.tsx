@@ -1,32 +1,32 @@
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import { Skeleton } from "@/components/ui/skeleton";
 import Swal from "sweetalert2";
 
 // Generic type: array of records
-export function exportToExcel<T extends Record<string, any>>(
+export async function exportToExcel<T extends Record<string, any>>(
   jsonData: T[],
   fileName: string = "data"
-): void {
+): Promise<void> {
   if (!jsonData || jsonData.length === 0) {
     console.warn("No data to export");
     return;
   }
 
-  // Step 1: Convert JSON to worksheet
-  const worksheet = XLSX.utils.json_to_sheet(jsonData);
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet("Sheet1");
 
-  // Step 2: Create a new workbook and append the worksheet
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
+  const headers = Object.keys(jsonData[0]);
+  worksheet.addRow(headers);
 
-  // Step 3: Generate Excel buffer
-  const excelBuffer = XLSX.write(workbook, {
-    bookType: "xlsx",
-    type: "array",
+  jsonData.forEach((item) => {
+    worksheet.addRow(Object.values(item));
   });
 
-  // Step 4: Format datetime for filename
+  worksheet.getRow(1).font = { bold: true };
+
+  const excelBuffer = await workbook.xlsx.writeBuffer();
+
   const date = new Date();
   const formattedDate = `${date.getFullYear()}${String(
     date.getMonth() + 1
@@ -36,14 +36,12 @@ export function exportToExcel<T extends Record<string, any>>(
   ).padStart(2, "0")}${String(date.getSeconds()).padStart(2, "0")}`;
   const formattedFileName = `${formattedDate}-${formattedTime}-${fileName}.xlsx`;
 
-  // Step 5: Save to file
-  const data = new Blob([excelBuffer], {
+  const blob = new Blob([excelBuffer], {
     type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   });
-  saveAs(data, formattedFileName);
+  saveAs(blob, formattedFileName);
 }
 
-// Props for the ExportExcel component
 interface ExportExcelProps<T extends Record<string, any>> {
   jsonData: T[];
   fileName?: string;
@@ -64,7 +62,7 @@ export function ExportExcel<T extends Record<string, any>>({
       ) : (
         <button
           className="bg-gray-100 hover:bg-gray-200 text-black font-bold py-3 px-6"
-          onClick={() => {
+          onClick={async () => {
             if (!jsonData || jsonData.length === 0) {
               Swal.fire({
                 icon: "info",
@@ -74,7 +72,7 @@ export function ExportExcel<T extends Record<string, any>>({
               });
               return;
             }
-            exportToExcel(jsonData, fileName);
+            await exportToExcel(jsonData, fileName);
           }}
         >
           {label}

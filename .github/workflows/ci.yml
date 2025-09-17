@@ -72,7 +72,7 @@ jobs:
           sarif_file: semgrep.sarif
 
   sca:
-    name: Dependency Vulnerability Scan (npm audit)
+    name: Dependency Vulnerability Scan
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
