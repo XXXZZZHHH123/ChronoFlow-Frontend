@@ -14,9 +14,9 @@ function setAuthFromServer(payload: AuthCredentials) {
   s.setAuth(credentials);
 }
 
-export async function login(credentials: LoginUser) {
+export async function login(credentials: LoginUser): Promise<AuthCredentials> {
   const res = await http.post("/system/auth/login", credentials);
-  const data = unwrap(res.data) as any;
+  const data = unwrap<AuthCredentials>(res.data);
   if (data.user) {
     setAuthFromServer({ user: data.user });
   }
