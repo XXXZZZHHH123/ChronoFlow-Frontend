@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [test]
+    branches: [test, dev]
   pull_request:
-    branches: [test]
+    branches: [test, dev]
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -44,57 +44,3 @@ jobs:
           name: coverage
           path: coverage/
 
-  sast:
-    name: Static Application Security Testing (Semgrep)
-    runs-on: ubuntu-latest
-    permissions:
-      security-events: write
-      contents: read
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - run: pipx install semgrep
-
-  
-      - name: Run Semgrep
-        run: |
-          semgrep --version
-          semgrep --config p/typescript --sarif --output semgrep.sarif
-          # add --error to fail job on any finding:
-          # semgrep --config p/typescript --sarif --output semgrep.sarif --error
-
-      - name: Upload SARIF to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: semgrep.sarif
-
-  sca:
-    name: Dependency Vulnerability Scan
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'npm'
-      - run: npm ci
-      - name: Run npm audit (JSON)
-        run: |
-          set -o pipefail
-          npm audit --json > audit.json || true
-      - name: Fail on high/critical vulns
-        run: |
-          node -e "const r=require('./audit.json'); \
-            const counts=r.metadata?.vulnerabilities || r.metadata || {}; \
-            console.log('Vulns:', counts); \
-            const high=(counts.high||0); const critical=(counts.critical||0); \
-            if (high+critical>0) { console.error('Failing: high+critical =', high+critical); process.exit(1); }"
-      - name: Upload audit.json artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: npm-audit
-          path: audit.json

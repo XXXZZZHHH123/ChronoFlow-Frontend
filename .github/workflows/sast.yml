@@ -2,9 +2,9 @@ name: "sast"
 
 on:
   push:
-    branches: [test]
+    branches: [test, dev]
   pull_request:
-    branches: [test]
+    branches: [test, dev]
 
 jobs:
   sast:
