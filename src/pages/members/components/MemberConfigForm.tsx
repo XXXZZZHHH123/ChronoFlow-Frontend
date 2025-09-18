@@ -33,7 +33,7 @@ import {
   type MemberConfig,
   type Member,
 } from "@/lib/validation/schema";
-import { ROLE_ID_TO_NAME, ROLE_OPTIONS } from "@/lib/shared/role";
+import { ORG_MEMBER_ROLE_OPTIONS } from "@/lib/shared/role";
 import { createMember, updateMember } from "@/api/memberApi";
 import Swal from "sweetalert2";
 
@@ -67,7 +67,7 @@ export default function MemberConfigFormSheet({
     if (isEdit && member) {
       form.reset({
         email: member.email,
-        roleIds: member.roles ? member.roles.map((id) => Number(id)) : [],
+        roleIds: member.roles ?? [],
         remark: "",
       });
     } else {
@@ -98,8 +98,11 @@ export default function MemberConfigFormSheet({
       reset({ email: "", roleIds: [], remark: "" });
       setOpen(false);
       onRefresh();
-    } catch (err: any) {
-      const msg = err?.message ?? "Operation failed. Please try again.";
+    } catch (err: unknown) {
+      const msg =
+        err instanceof Error
+          ? err.message
+          : "Operation failed. Please try again.";
       await Swal.fire({
         icon: "error",
         title: isEdit ? "Update failed" : "Creation failed",
@@ -155,7 +158,11 @@ export default function MemberConfigFormSheet({
                 render={({ field }) => {
                   const selected = new Set(field.value ?? []);
                   const selectedLabels = (field.value ?? [])
-                    .map((id) => ROLE_ID_TO_NAME[id])
+                    .map(
+                      (id) =>
+                        ORG_MEMBER_ROLE_OPTIONS.find((opt) => opt.id === id)
+                          ?.label
+                    )
                     .filter(Boolean);
 
                   return (
@@ -192,7 +199,7 @@ export default function MemberConfigFormSheet({
                             <CommandList>
                               <CommandEmpty>No roles found.</CommandEmpty>
                               <CommandGroup>
-                                {ROLE_OPTIONS.map((opt) => {
+                                {ORG_MEMBER_ROLE_OPTIONS.map((opt) => {
                                   const checked = selected.has(opt.id);
                                   return (
                                     <CommandItem
@@ -200,9 +207,11 @@ export default function MemberConfigFormSheet({
                                       value={opt.label}
                                       onSelect={() => {
                                         const next = new Set(field.value ?? []);
-                                        checked
-                                          ? next.delete(opt.id)
-                                          : next.add(opt.id);
+                                        if (checked) {
+                                          next.delete(opt.id);
+                                        } else {
+                                          next.add(opt.id);
+                                        }
                                         field.onChange(Array.from(next));
                                       }}
                                       className="cursor-pointer"
@@ -214,9 +223,11 @@ export default function MemberConfigFormSheet({
                                           const next = new Set(
                                             field.value ?? []
                                           );
-                                          checked
-                                            ? next.delete(opt.id)
-                                            : next.add(opt.id);
+                                          if (checked) {
+                                            next.delete(opt.id);
+                                          } else {
+                                            next.add(opt.id);
+                                          }
                                           field.onChange(Array.from(next));
                                         }}
                                       />

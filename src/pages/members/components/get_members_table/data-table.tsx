@@ -13,7 +13,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-
+import { ExportExcel } from "@/components/export-excel";
 import {
   Table,
   TableBody,
@@ -26,13 +26,17 @@ import {
 import { DataTableToolbar } from "@/components/data-table/data-table-toolbar";
 import { DataTablePagination } from "@/components/data-table/data-table-pagination";
 import { type Member } from "@/lib/validation/schema";
-import { roleFilterOptions } from "@/lib/shared/role";
+import {
+  mapOrgMemberRoleIdsToKeys,
+  orgMemberRoleFilterOptions,
+} from "@/lib/shared/role";
 import { registeredFilterOptions } from "@/lib/shared/member";
 import BulkMemberUploadSheet from "../MemberBulkUpload";
 import CreateMemberSheet from "../MemberConfigForm";
+import { useMemo } from "react";
 
 type MembersTableProps = {
-  columns: ColumnDef<Member, any>[];
+  columns: ColumnDef<Member, unknown>[];
   data: Member[];
   onRefresh: () => void;
 };
@@ -69,6 +73,20 @@ export default function MembersTable({
     enableRowSelection: true,
   });
 
+  const allTableData = useMemo(() => {
+    return table.getFilteredRowModel().rows.map((row) => row.original);
+  }, [table]);
+
+  const excelExportData = useMemo(() => {
+    return allTableData.map((item) => ({
+      Name: item.name,
+      Email: item.email,
+      Phone: item.phone,
+      Roles: mapOrgMemberRoleIdsToKeys(item.roles).join(", "),
+      Registered: item.registered ? "Yes" : "No",
+    }));
+  }, [allTableData]);
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center flex-wrap gap-4 mb-4">
@@ -78,7 +96,7 @@ export default function MembersTable({
           filterColumn={[
             {
               column: "role_keys",
-              option: roleFilterOptions(),
+              option: orgMemberRoleFilterOptions(),
               title: "Role",
               searchParams: true,
             },
@@ -91,6 +109,11 @@ export default function MembersTable({
           ]}
           buttonRight={
             <div className="flex items-center gap-2">
+              <ExportExcel
+                jsonData={excelExportData}
+                fileName={"members"}
+                loading={false}
+              />
               <BulkMemberUploadSheet onRefresh={onRefresh} />
               <CreateMemberSheet onRefresh={onRefresh} />
             </div>

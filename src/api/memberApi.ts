@@ -19,18 +19,11 @@ export async function uploadMembersExcel(
   const form = new FormData();
   form.append("file", file, file.name);
 
-  try {
-    const res = await http.post("/organizer/users/bulk-upsert", form, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
-    return unwrap<MemberBulkUpsertResult>(res.data);
-  } catch (err: any) {
-    throw err;
-  }
+  const res = await http.post("/organizer/users/bulk-upsert", form, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return unwrap<MemberBulkUpsertResult>(res.data);
 }
-
 
 export async function createMember(input: MemberConfig) {
   const payload = {

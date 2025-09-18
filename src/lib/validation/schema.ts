@@ -3,8 +3,8 @@ import { z } from "zod";
 //Login
 //later need to adjust the password length to at least 8 characters
 export const loginUserSchema = z.object({
-  username: z.string().trim().min(6, "Invalid username"),
-  password: z.string(),
+  username: z.string().min(1, "Username is required"),
+  password: z.string().min(1, "Password is required"),
   remember: z.boolean(),
 });
 
@@ -98,7 +98,7 @@ export type MembersResponse = z.infer<typeof MembersResponseSchema>;
 
 export const MemberConfigSchema = z.object({
   email: z.email("Invalid email"),
-  roleIds: z.array(z.number()).nonempty("At least one role is required"),
+  roleIds: z.array(z.string()).nonempty("At least one role is required"),
   remark: z.string().trim().optional(),
 });
 export type MemberConfig = z.infer<typeof MemberConfigSchema>;

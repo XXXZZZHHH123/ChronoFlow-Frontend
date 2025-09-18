@@ -14,8 +14,8 @@ export type Menu = {
 export type Group = { groupLabel: string; menus: Menu[] };
 
 export function getMenuList(pathname: string): Group[] {
-  const { user } = useAuthStore();
-  const { selected_event_id } = useEventStore();
+  const { user } = useAuthStore.getState();
+  const { selected_event_id } = useEventStore.getState();
 
   if (!user) {
     return [];
@@ -77,18 +77,6 @@ export function getMenuList(pathname: string): Group[] {
             active: pathname === "/events",
             submenus: [],
             icon: CalendarDays,
-          },
-        ],
-      },
-      {
-        groupLabel: "Member Administration",
-        menus: [
-          {
-            href: "/members",
-            label: "Member",
-            active: pathname === "/members",
-            submenus: [],
-            icon: Users,
           },
         ],
       },

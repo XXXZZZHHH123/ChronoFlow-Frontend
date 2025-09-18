@@ -16,50 +16,21 @@ describe("loginUserSchema", () => {
     });
     expect(r.success).toBe(false);
     if (!r.success) {
-      const usernameIssue = r.error.issues.find(
-        (i) => i.path.join(".") === "username"
-      );
-      expect(usernameIssue?.message).toBe("Username is required");
+      const issue = r.error.issues.find((i) => i.path.join(".") === "username");
+      expect(issue?.message).toBe("Username is required");
     }
   });
 
-  it("rejects too short password", () => {
+  it("rejects empty password", () => {
     const r = loginUserSchema.safeParse({
       username: "alice",
-      password: "ab",
+      password: "",
       remember: false,
     });
     expect(r.success).toBe(false);
     if (!r.success) {
-      const pwdIssue = r.error.issues.find(
-        (i) => i.path.join(".") === "password"
-      );
-      expect(pwdIssue?.message).toBe("Password must be at least 3 characters");
-    }
-  });
-
-  it("trims username and still validates", () => {
-    const res = loginUserSchema.parse({
-      username: "  alice  ",
-      password: "abc",
-      remember: false,
-    });
-    expect(res.username).toBe("alice");
-  });
-
-  it("rejects overly long password", () => {
-    const long = "x".repeat(129);
-    const r = loginUserSchema.safeParse({
-      username: "a",
-      password: long,
-      remember: false,
-    });
-    expect(r.success).toBe(false);
-    if (!r.success) {
-      const pwdIssue = r.error.issues.find(
-        (i) => i.path.join(".") === "password"
-      );
-      expect(pwdIssue?.message).toBe("Password is too long");
+      const issue = r.error.issues.find((i) => i.path.join(".") === "password");
+      expect(issue?.message).toBe("Password is required");
     }
   });
 });

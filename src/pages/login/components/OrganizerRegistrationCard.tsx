@@ -86,8 +86,12 @@ export function OrganizerRegistrationCard({
       });
       reset();
       onBack();
-    } catch (err: any) {
-      const msg = err?.message ?? "Registration failed. Please try again.";
+    } catch (err: unknown) {
+      const msg =
+        err instanceof Error
+          ? err.message
+          : "Registration failed. Please try again.";
+
       await Swal.fire({
         icon: "error",
         title: "Registration failed",

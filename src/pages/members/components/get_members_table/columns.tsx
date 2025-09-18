@@ -2,7 +2,7 @@ import { type ColumnDef } from "@tanstack/react-table";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { Button } from "@/components/ui/button";
 import type { Member } from "@/lib/validation/schema";
-import { mapRoleIdsToKeys } from "@/lib/shared/role";
+import { mapOrgMemberRoleIdsToKeys } from "@/lib/shared/role";
 import MemberConfigFormSheet from "../MemberConfigForm";
 import Swal from "sweetalert2";
 import { deleteMember } from "@/api/memberApi";
@@ -39,12 +39,15 @@ export const MemberColumns = (
             confirmButtonText: "OK",
           });
           await onRefresh();
-        } catch (err: any) {
+        } catch (err: unknown) {
+          const msg =
+            err instanceof Error
+              ? err.message
+              : "Unable to delete the member. Please try again.";
           await Swal.fire({
             icon: "error",
             title: "Delete failed",
-            text:
-              err?.message ?? "Unable to delete the member. Please try again.",
+            text: msg,
             confirmButtonText: "OK",
           });
         }
@@ -85,7 +88,7 @@ export const MemberColumns = (
   },
   {
     id: "role_keys",
-    accessorFn: (row) => mapRoleIdsToKeys(row.roles.map(Number)),
+    accessorFn: (row) => mapOrgMemberRoleIdsToKeys(row.roles ?? []),
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Roles" />
     ),

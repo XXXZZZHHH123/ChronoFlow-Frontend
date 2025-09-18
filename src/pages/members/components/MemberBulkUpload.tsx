@@ -49,8 +49,9 @@ export default function BulkMemberUploadSheet({
       const res = await uploadMembersExcel(file);
       setResult(res);
       setResultDialogOpen(true);
-    } catch (e: any) {
-      setErr(e?.message ?? "Upload failed");
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Upload failed";
+      setErr(msg);
       setResultDialogOpen(true);
     } finally {
       setSubmitting(false);
@@ -84,8 +85,8 @@ export default function BulkMemberUploadSheet({
             </li>
             <li>
               Role ID mapping: <span className="font-mono">2 = ORGANIZER</span>,{" "}
-              <span className="font-mono">3 = MANAGER</span>,{" "}
-              <span className="font-mono">4 = STAFF</span>.
+              <span className="font-mono">3 = STAFF</span>,{" "}
+              <span className="font-mono">4 = MANAGER</span>.
             </li>
             <li>Accepted file types: .xlsx / .xls</li>
           </ul>
