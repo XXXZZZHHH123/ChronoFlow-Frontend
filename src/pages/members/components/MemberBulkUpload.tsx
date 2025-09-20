@@ -7,7 +7,7 @@ import {
   SheetTrigger,
   SheetDescription,
 } from "@/components/ui/sheet";
-import { Loader2, Download, Info } from "lucide-react";
+import { Loader2, Download } from "lucide-react";
 import { uploadMembersExcel } from "@/api/memberApi";
 import { cn } from "@/lib/utils";
 import {
@@ -18,13 +18,17 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import type { RoleOption } from "@/services/role";
+import { BulkUploadInstructions } from "./MemberBulkUploadInstruction";
 
 type BulkMemberUploadSheetProps = {
   onRefresh: () => void;
+  roleOptions: RoleOption[];
 };
 
 export default function BulkMemberUploadSheet({
   onRefresh,
+  roleOptions,
 }: BulkMemberUploadSheetProps) {
   const [open, setOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
@@ -70,58 +74,7 @@ export default function BulkMemberUploadSheet({
           Download the template, fill it, then upload.
         </SheetDescription>
 
-        {/* Instructions */}
-        <div className="mt-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm">
-          <div className="mb-2 flex items-center gap-2 font-medium text-amber-800">
-            <Info className="h-4 w-4" />
-            Template requirements
-          </div>
-
-          <ul className="list-disc space-y-1 pl-5 text-amber-900">
-            <li>
-              Columns: <span className="font-mono">email</span>,{" "}
-              <span className="font-mono">roleIds</span> (comma-separated
-              numbers), <span className="font-mono">remark</span>.
-            </li>
-            <li>
-              Role ID mapping: <span className="font-mono">2 = ORGANIZER</span>,{" "}
-              <span className="font-mono">3 = STAFF</span>,{" "}
-              <span className="font-mono">4 = MANAGER</span>.
-            </li>
-            <li>Accepted file types: .xlsx / .xls</li>
-          </ul>
-
-          {/* Example table */}
-          <div className="mt-3 overflow-x-auto">
-            <table className="w-full border text-xs bg-white">
-              <thead>
-                <tr className="bg-muted">
-                  <th className="border px-2 py-1 text-left font-medium">
-                    email
-                  </th>
-                  <th className="border px-2 py-1 text-left font-medium">
-                    roleIds
-                  </th>
-                  <th className="border px-2 py-1 text-left font-medium">
-                    remark
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td className="border px-2 py-1 font-mono">user@acme.com</td>
-                  <td className="border px-2 py-1 font-mono">3,4</td>
-                  <td className="border px-2 py-1">Assign Manager & Staff</td>
-                </tr>
-                <tr>
-                  <td className="border px-2 py-1 font-mono">admin@acme.com</td>
-                  <td className="border px-2 py-1 font-mono">2</td>
-                  <td className="border px-2 py-1">Organizer role only</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <BulkUploadInstructions roleOptions={roleOptions} />
 
         <div className="mt-5 space-y-5">
           <Button

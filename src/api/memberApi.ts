@@ -1,5 +1,5 @@
 import { http } from "@/lib/http";
-import type { MemberBulkUpsertResult } from "@/lib/shared/member";
+import type { MemberBulkUpsertResult } from "@/services/member";
 import { unwrap } from "@/lib/utils";
 import {
   type Member,

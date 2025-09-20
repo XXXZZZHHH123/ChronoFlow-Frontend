@@ -65,6 +65,7 @@ export function useMemberInvite(): UseMemberInviteType {
       }
     })();
   }, [params, lookup]);
+
   const fromInviteLink = !!(
     params.get("organisation_id") && params.get("user_id")
   );

@@ -22,29 +22,28 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
 import { DataTableToolbar } from "@/components/data-table/data-table-toolbar";
 import { DataTablePagination } from "@/components/data-table/data-table-pagination";
 import { type Member } from "@/lib/validation/schema";
-import {
-  mapOrgMemberRoleIdsToKeys,
-  orgMemberRoleFilterOptions,
-} from "@/lib/shared/role";
-import { registeredFilterOptions } from "@/lib/shared/member";
+import { getRoleKeysByIds, type RoleOption } from "@/services/role";
+import { registeredFilterOptions } from "@/services/member";
 import BulkMemberUploadSheet from "../MemberBulkUpload";
 import CreateMemberSheet from "../MemberConfigForm";
+import { getDropDownValues } from "@/lib/utils";
 import { useMemo } from "react";
 
 type MembersTableProps = {
   columns: ColumnDef<Member, unknown>[];
   data: Member[];
   onRefresh: () => void;
+  roleOptions: RoleOption[];
 };
 
 export default function MembersTable({
   columns,
   data,
   onRefresh,
+  roleOptions,
 }: MembersTableProps) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -78,14 +77,17 @@ export default function MembersTable({
   }, [table]);
 
   const excelExportData = useMemo(() => {
-    return allTableData.map((item) => ({
-      Name: item.name,
-      Email: item.email,
-      Phone: item.phone,
-      Roles: mapOrgMemberRoleIdsToKeys(item.roles).join(", "),
-      Registered: item.registered ? "Yes" : "No",
-    }));
-  }, [allTableData]);
+    return allTableData.map((item) => {
+      const resolved = getRoleKeysByIds(item.roles ?? [], roleOptions);
+      return {
+        Name: item.name,
+        Email: item.email,
+        Phone: item.phone,
+        Roles: resolved.join(", "),
+        Registered: item.registered ? "Yes" : "No",
+      };
+    });
+  }, [allTableData, roleOptions]);
 
   return (
     <div className="space-y-4">
@@ -95,15 +97,15 @@ export default function MembersTable({
           searchColumn={[]}
           filterColumn={[
             {
-              column: "role_keys",
-              option: orgMemberRoleFilterOptions(),
-              title: "Role",
-              searchParams: true,
-            },
-            {
               column: "registered",
               option: registeredFilterOptions(),
               title: "Registeration",
+              searchParams: true,
+            },
+            {
+              column: "role_keys",
+              option: getDropDownValues(roleOptions, "label"),
+              title: "Role",
               searchParams: true,
             },
           ]}
@@ -114,8 +116,14 @@ export default function MembersTable({
                 fileName={"members"}
                 loading={false}
               />
-              <BulkMemberUploadSheet onRefresh={onRefresh} />
-              <CreateMemberSheet onRefresh={onRefresh} />
+              <BulkMemberUploadSheet
+                onRefresh={onRefresh}
+                roleOptions={roleOptions}
+              />
+              <CreateMemberSheet
+                onRefresh={onRefresh}
+                rolesOptions={roleOptions}
+              />
             </div>
           }
         />

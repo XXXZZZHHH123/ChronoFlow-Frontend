@@ -1,6 +1,6 @@
 import { Outlet } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { useSidebarToggle } from "@/hooks/use-side-bar-toggle";
+import { useSidebarToggle } from "@/hooks/system/useSideBarToggle";
 import { Sidebar } from "@/components/side-bar/side-bar";
 import { Navbar } from "@/components/nav-bar/bar";
 

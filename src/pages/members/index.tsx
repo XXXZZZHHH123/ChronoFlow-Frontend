@@ -1,11 +1,32 @@
 import { DataTableLoading } from "@/components/data-table/data-table-skeleton";
 import { Card, CardContent } from "@/components/ui/card";
-import MembersTable from "./components/get_members_table/data-table";
-import { MemberColumns } from "./components/get_members_table/columns";
-import { useMembers } from "./hooks/userMember";
+import MembersTable from "./components/get-member-team/data-table";
+import { MemberColumns } from "./components/get-member-team/columns";
+import { useMembers } from "../../hooks/members/userMember";
+import { useSystemRoles } from "@/hooks/roles/useSystemRoles";
+import { useMemo } from "react";
 
 export default function MembersPage() {
-  const { members, loading, error, onRefresh } = useMembers(true);
+  const {
+    members,
+    loading: membersLoading,
+    error: membersError,
+    onRefresh: onMemberRefresh,
+  } = useMembers(true);
+
+  const {
+    roleOptions,
+    loading: rolesLoading,
+    error: rolesError
+  } = useSystemRoles(true);
+
+  const loading = membersLoading || rolesLoading;
+  const error = membersError || rolesError;
+
+  const columns = useMemo(
+    () => MemberColumns(onMemberRefresh, roleOptions),
+    [onMemberRefresh, roleOptions]
+  );
 
   return (
     <Card className="rounded-lg border-none">
@@ -22,9 +43,10 @@ export default function MembersPage() {
           <div className="overflow-x-auto">
             <div className="min-w-[960px]">
               <MembersTable
-                columns={MemberColumns(onRefresh)}
+                columns={columns}
                 data={members}
-                onRefresh={onRefresh}
+                onRefresh={onMemberRefresh}
+                roleOptions={roleOptions}
               />
             </div>
           </div>

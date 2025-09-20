@@ -27,24 +27,26 @@ import {
 } from "@/components/ui/command";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
-
 import {
   MemberConfigSchema,
   type MemberConfig,
   type Member,
 } from "@/lib/validation/schema";
-import { ORG_MEMBER_ROLE_OPTIONS } from "@/lib/shared/role";
 import { createMember, updateMember } from "@/api/memberApi";
 import Swal from "sweetalert2";
+import { useMemo } from "react";
+import type { RoleOption } from "@/services/role";
 
 type MemberConfigFormProps = {
   member?: Member;
   onRefresh: () => void;
+  rolesOptions: RoleOption[];
 };
 
 export default function MemberConfigFormSheet({
   member,
   onRefresh,
+  rolesOptions,
 }: MemberConfigFormProps) {
   const [open, setOpen] = useState(false);
   const [rolesOpen, setRolesOpen] = useState(false);
@@ -112,6 +114,11 @@ export default function MemberConfigFormSheet({
     }
   });
 
+  const roleIdToLabel = useMemo(
+    () => new Map(rolesOptions.map((o) => [o.id, o.label] as const)),
+    [rolesOptions]
+  );
+
   return (
     <Sheet
       open={open}
@@ -158,12 +165,8 @@ export default function MemberConfigFormSheet({
                 render={({ field }) => {
                   const selected = new Set(field.value ?? []);
                   const selectedLabels = (field.value ?? [])
-                    .map(
-                      (id) =>
-                        ORG_MEMBER_ROLE_OPTIONS.find((opt) => opt.id === id)
-                          ?.label
-                    )
-                    .filter(Boolean);
+                    .map((id) => roleIdToLabel.get(id))
+                    .filter(Boolean) as string[];
 
                   return (
                     <>
@@ -173,6 +176,7 @@ export default function MemberConfigFormSheet({
                             type="button"
                             variant="outline"
                             className="justify-between w-full"
+                            disabled={rolesOptions.length === 0}
                           >
                             {selectedLabels.length > 0 ? (
                               <div className="flex flex-wrap gap-1">
@@ -188,18 +192,21 @@ export default function MemberConfigFormSheet({
                               </div>
                             ) : (
                               <span className="text-muted-foreground">
-                                Select roles…
+                                {rolesOptions.length === 0
+                                  ? "No roles available"
+                                  : "Select roles…"}
                               </span>
                             )}
                           </Button>
                         </PopoverTrigger>
+
                         <PopoverContent className="p-0 w-[--radix-popover-trigger-width]">
                           <Command>
                             <CommandInput placeholder="Search roles…" />
                             <CommandList>
                               <CommandEmpty>No roles found.</CommandEmpty>
                               <CommandGroup>
-                                {ORG_MEMBER_ROLE_OPTIONS.map((opt) => {
+                                {rolesOptions.map((opt) => {
                                   const checked = selected.has(opt.id);
                                   return (
                                     <CommandItem
@@ -207,11 +214,8 @@ export default function MemberConfigFormSheet({
                                       value={opt.label}
                                       onSelect={() => {
                                         const next = new Set(field.value ?? []);
-                                        if (checked) {
-                                          next.delete(opt.id);
-                                        } else {
-                                          next.add(opt.id);
-                                        }
+                                        if (checked) next.delete(opt.id);
+                                        else next.add(opt.id);
                                         field.onChange(Array.from(next));
                                       }}
                                       className="cursor-pointer"
@@ -223,11 +227,8 @@ export default function MemberConfigFormSheet({
                                           const next = new Set(
                                             field.value ?? []
                                           );
-                                          if (checked) {
-                                            next.delete(opt.id);
-                                          } else {
-                                            next.add(opt.id);
-                                          }
+                                          if (checked) next.delete(opt.id);
+                                          else next.add(opt.id);
                                           field.onChange(Array.from(next));
                                         }}
                                       />

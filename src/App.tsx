@@ -2,7 +2,7 @@ import { RouterProvider } from "react-router-dom";
 import router from "./router/route";
 import { useEffect, useState } from "react";
 import { refresh } from "./api/authApi";
-import { useSessionKeepAlive } from "@/hooks/use-session-keep-alive";
+import { useSessionKeepAlive } from "@/hooks/system/useSessionKeepAlive";
 
 function AuthBootstrap({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);

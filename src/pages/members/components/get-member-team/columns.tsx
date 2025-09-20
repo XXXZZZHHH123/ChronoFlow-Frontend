@@ -2,13 +2,13 @@ import { type ColumnDef } from "@tanstack/react-table";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { Button } from "@/components/ui/button";
 import type { Member } from "@/lib/validation/schema";
-import { mapOrgMemberRoleIdsToKeys } from "@/lib/shared/role";
 import MemberConfigFormSheet from "../MemberConfigForm";
 import Swal from "sweetalert2";
 import { deleteMember } from "@/api/memberApi";
 
 export const MemberColumns = (
-  onRefresh: () => Promise<void> | void
+  onRefresh: () => Promise<void> | void,
+  roleOptions: { id: string; label: string }[]
 ): ColumnDef<Member>[] => [
   {
     id: "actions",
@@ -58,7 +58,11 @@ export const MemberColumns = (
           <Button size="sm" variant="destructive" onClick={onDelete}>
             Delete
           </Button>
-          <MemberConfigFormSheet member={member} onRefresh={onRefresh} />
+          <MemberConfigFormSheet
+            member={member}
+            onRefresh={onRefresh}
+            rolesOptions={roleOptions}
+          />
         </div>
       );
     },
@@ -88,7 +92,16 @@ export const MemberColumns = (
   },
   {
     id: "role_keys",
-    accessorFn: (row) => mapOrgMemberRoleIdsToKeys(row.roles ?? []),
+    accessorFn: (row) => {
+      const ids = row.roles ?? [];
+      return Array.from(
+        new Set(
+          ids
+            .map((id) => roleOptions.find((o) => o.id === id)?.label)
+            .filter(Boolean)
+        )
+      );
+    },
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Roles" />
     ),

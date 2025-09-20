@@ -2,7 +2,14 @@ import { useCallback, useEffect, useState } from "react";
 import { getMembers } from "@/api/memberApi";
 import type { Member } from "@/lib/validation/schema";
 
-export function useMembers(autoFetch: boolean = true) {
+export type UseMembersType = {
+  members: Member[];
+  loading: boolean;
+  error: string | null;
+  onRefresh: () => Promise<void>;
+};
+
+export function useMembers(autoFetch: boolean = false): UseMembersType {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
