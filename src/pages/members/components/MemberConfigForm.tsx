@@ -202,24 +202,33 @@ export default function MemberConfigFormModal({
                                 <CommandGroup>
                                   {rolesOptions.map((opt) => {
                                     const checked = selected.has(opt.id);
-                                    const toggle = () => {
+                                    
+                                    const toggle = (nextChecked?: boolean) => {
                                       const next = new Set(field.value ?? []);
-                                      checked
-                                        ? next.delete(opt.id)
-                                        : next.add(opt.id);
+                                      const shouldAdd = nextChecked ?? !checked;
+
+                                      if (shouldAdd) {
+                                        next.add(opt.id);
+                                      } else {
+                                        next.delete(opt.id);
+                                      }
+
                                       field.onChange(Array.from(next));
                                     };
+
                                     return (
                                       <CommandItem
                                         key={opt.id}
                                         value={opt.label}
-                                        onSelect={toggle}
+                                        onSelect={() => toggle()}
                                         className="cursor-pointer"
                                       >
                                         <Checkbox
                                           checked={checked}
                                           className="mr-2"
-                                          onCheckedChange={toggle}
+                                          onCheckedChange={(v) =>
+                                            toggle(Boolean(v))
+                                          }
                                         />
                                         {opt.label}
                                       </CommandItem>
