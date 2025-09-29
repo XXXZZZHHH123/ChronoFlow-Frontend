@@ -1,13 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { getSystemRoles } from "@/api/roleApi";
-import {
-  type OrgSystemRole,
-  type RoleOption,
-  buildRoleOptions,
-} from "@/services/role";
+import { type RoleOption, buildRoleOptions } from "@/services/role";
+import { type Role } from "@/lib/validation/schema";
 
 export type UseSystemRolesType = {
-  roles: OrgSystemRole[];
+  roles: Role[];
   roleOptions: RoleOption[];
   loading: boolean;
   error: string | null;
@@ -15,7 +12,7 @@ export type UseSystemRolesType = {
 };
 
 export function useSystemRoles(autoFetch: boolean = false): UseSystemRolesType {
-  const [roles, setRoles] = useState<OrgSystemRole[]>([]);
+  const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

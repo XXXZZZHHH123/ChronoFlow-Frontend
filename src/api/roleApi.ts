@@ -1,8 +1,8 @@
 import { http } from "@/lib/http";
-import type { OrgSystemRole } from "@/services/role";
+import { type Role } from "@/lib/validation/schema";
 import { unwrap } from "@/lib/utils";
 
-export async function getSystemRoles(): Promise<OrgSystemRole[]> {
-  const res = await http.get("/system/role/list");
-  return unwrap<OrgSystemRole[]>(res.data);
+export async function getSystemRoles(): Promise<Role[]> {
+  const res = await http.get("/system/roles");
+  return unwrap<Role[]>(res.data);
 }

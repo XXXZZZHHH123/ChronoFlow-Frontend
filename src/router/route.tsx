@@ -4,7 +4,7 @@ import ErrorFallback from "@/components/error";
 import RequireAuth from "@/components/auth/require-auth";
 import RootPage from "@/pages/Root";
 import LoginPage from "@/pages/login";
-import MembersPage from "@/pages/members";
+import OrganisationPage from "@/pages/organisation";
 import OrgEventsPage from "@/pages/events";
 import SpecificEventDashboardPage from "@/pages/event-dashboard";
 import SpecificEventGroupsPage from "@/pages/event-groups";
@@ -22,7 +22,7 @@ const router = createBrowserRouter([
         element: <AppLayout />,
         children: [
           { index: true, element: <RootPage /> },
-          { path: "members", element: <MembersPage /> },
+          { path: "organisation", element: <OrganisationPage /> },
           { path: "events", element: <OrgEventsPage /> },
           {
             path: "event/:id/dashboard",

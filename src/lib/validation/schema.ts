@@ -162,3 +162,26 @@ export const EventConfigSchema = z
   });
 
 export type EventConfig = z.infer<typeof EventConfigSchema>;
+
+export const permissionSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  key: z.string(),
+});
+
+export const roleSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  key: z.string(),
+  permissions: z.array(permissionSchema).nullable(),
+});
+
+export const roleListResponseSchema = z.object({
+  code: z.number(),
+  msg: z.string().optional(),
+  data: z.array(roleSchema),
+});
+
+export type Permission = z.infer<typeof permissionSchema>;
+export type Role = z.infer<typeof roleSchema>;
+export type RoleListResponse = z.infer<typeof roleListResponseSchema>;

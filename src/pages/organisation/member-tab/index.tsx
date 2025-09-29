@@ -1,12 +1,12 @@
 import { DataTableLoading } from "@/components/data-table/data-table-skeleton";
 import { Card, CardContent } from "@/components/ui/card";
-import MembersTable from "./components/get-member-table/data-table";
-import { MemberColumns } from "./components/get-member-table/columns";
-import { useMembers } from "../../hooks/members/userMember";
+import { useMembers } from "@/hooks/members/userMember";
 import { useSystemRoles } from "@/hooks/roles/useSystemRoles";
 import { useMemo } from "react";
+import { MemberColumns } from "./components/get-member-table/columns";
+import MembersTable from "./components/get-member-table/data-table";
 
-export default function MembersPage() {
+export default function MembersTab() {
   const {
     members,
     loading: membersLoading,
@@ -17,7 +17,7 @@ export default function MembersPage() {
   const {
     roleOptions,
     loading: rolesLoading,
-    error: rolesError
+    error: rolesError,
   } = useSystemRoles(true);
 
   const loading = membersLoading || rolesLoading;

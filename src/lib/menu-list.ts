@@ -1,9 +1,9 @@
 import {
   CalendarDays,
   Users,
-  UserLock,
   LayoutDashboard,
   ListChecks,
+  Building2,
   type LucideIcon,
 } from "lucide-react";
 
@@ -27,7 +27,7 @@ export function getMenuList(
   if (!selectedEventId) {
     return [
       {
-        groupLabel: "Event Administration",
+        groupLabel: "Administration",
         menus: [
           {
             href: "/events",
@@ -36,24 +36,12 @@ export function getMenuList(
             submenus: [],
             icon: CalendarDays,
           },
-        ],
-      },
-      {
-        groupLabel: "Member Administration",
-        menus: [
           {
-            href: "/members",
-            label: "Members",
-            active: pathname === "/members",
+            href: "/organisation",
+            label: "Organisation",
+            active: pathname === "/organisation",
             submenus: [],
-            icon: Users,
-          },
-          {
-            href: "/roles",
-            label: "Roles",
-            active: pathname === "/roles",
-            submenus: [],
-            icon: UserLock,
+            icon: Building2,
           },
         ],
       },
