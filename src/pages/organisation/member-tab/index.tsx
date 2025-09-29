@@ -6,19 +6,23 @@ import { useMemo } from "react";
 import { MemberColumns } from "./components/get-member-table/columns";
 import MembersTable from "./components/get-member-table/data-table";
 
-export default function MembersTab() {
+export default function MembersTab({
+  autoFetch = false,
+}: {
+  autoFetch?: boolean;
+}) {
   const {
     members,
     loading: membersLoading,
     error: membersError,
     onRefresh: onMemberRefresh,
-  } = useMembers(true);
+  } = useMembers(autoFetch);
 
   const {
     roleOptions,
     loading: rolesLoading,
     error: rolesError,
-  } = useSystemRoles(true);
+  } = useSystemRoles(autoFetch);
 
   const loading = membersLoading || rolesLoading;
   const error = membersError || rolesError;

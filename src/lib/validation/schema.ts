@@ -163,7 +163,7 @@ export const EventConfigSchema = z
 
 export type EventConfig = z.infer<typeof EventConfigSchema>;
 
-export const permissionSchema = z.object({
+export const rolePermissionSchema = z.object({
   id: z.string(),
   name: z.string(),
   key: z.string(),
@@ -173,7 +173,7 @@ export const roleSchema = z.object({
   id: z.string(),
   name: z.string(),
   key: z.string(),
-  permissions: z.array(permissionSchema).nullable(),
+  permissions: z.array(rolePermissionSchema).nullable(),
 });
 
 export const roleListResponseSchema = z.object({
@@ -182,6 +182,6 @@ export const roleListResponseSchema = z.object({
   data: z.array(roleSchema),
 });
 
-export type Permission = z.infer<typeof permissionSchema>;
+export type RolePermission = z.infer<typeof rolePermissionSchema>;
 export type Role = z.infer<typeof roleSchema>;
 export type RoleListResponse = z.infer<typeof roleListResponseSchema>;
