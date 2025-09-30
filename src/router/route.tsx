@@ -8,6 +8,7 @@ import OrganisationPage from "@/pages/organisation";
 import OrgEventsPage from "@/pages/events";
 import SpecificEventDashboardPage from "@/pages/event-dashboard";
 import SpecificEventGroupsPage from "@/pages/event-groups";
+import TasksPage from "@/pages/event-tasks";
 
 const router = createBrowserRouter([
   {
@@ -31,6 +32,10 @@ const router = createBrowserRouter([
           {
             path: "event/:id/groups",
             element: <SpecificEventGroupsPage />,
+          },
+          {
+            path: "event/:id/tasks",
+            element: <TasksPage />,
           },
         ],
       },

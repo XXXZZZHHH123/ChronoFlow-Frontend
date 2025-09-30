@@ -233,7 +233,9 @@ export const roleResponseSchema = z.array(roleSchema);
 
 export const roleAssignSchema = z.object({
   userId: z.string().trim().min(1, "User ID is required"),
-  roles: z.array(z.string().trim().min(1, "Role ID is required")).min(1, "At least one role must be assigned"),
+  roles: z
+    .array(z.string().trim().min(1, "Role ID is required"))
+    .min(1, "At least one role must be assigned"),
 });
 
 export type RoleAssign = z.infer<typeof roleAssignSchema>;
@@ -264,3 +266,26 @@ export const permissionConfigSchema = z.object({
 });
 
 export type PermissionConfig = z.infer<typeof permissionConfigSchema>;
+
+//Event Task
+export const eventTaskSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string().nullable().optional(),
+  status: z.number().int().min(0).max(4),
+  startTime: z.string().nullable(),
+  endTime: z.string().nullable(),
+  assignedUser: z
+    .object({
+      id: z.string(),
+      name: z.string(),
+      group: z.object({
+        id: z.string(),
+        name: z.string(),
+      }),
+    })
+    .nullable(),
+});
+
+export const eventTaskListSchema = z.array(eventTaskSchema);
+export type EventTask = z.infer<typeof eventTaskSchema>;
