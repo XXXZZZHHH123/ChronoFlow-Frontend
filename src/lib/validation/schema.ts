@@ -162,3 +162,54 @@ export const EventConfigSchema = z
   });
 
 export type EventConfig = z.infer<typeof EventConfigSchema>;
+
+// Group Member
+export const GroupMemberSchema = z.object({
+  userId: z.string(),
+  username: z.string().nullable(),
+  email: z.string().nullable(),
+  phone: z.string().nullable(),
+  roleId: z.string().nullable(),
+  roleName: z.string().nullable(),
+  joinTime: z.coerce.date().nullable(),
+});
+export type GroupMember = z.infer<typeof GroupMemberSchema>;
+
+// Group
+export const GroupSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  sort: z.number().int().default(0),
+  leadUserId: z.string().nullable(),
+  leadUserName: z.string().nullable(),
+  remark: z.string().nullable(),
+  status: z.number().int(),
+  statusName: z.string().nullable(),
+  eventId: z.string(),
+  eventName: z.string().nullable(),
+  memberCount: z.number().int().default(0),
+  members: z.array(GroupMemberSchema).optional(),
+  createTime: z.coerce.date(),
+  updateTime: z.coerce.date(),
+});
+export type Group = z.infer<typeof GroupSchema>;
+
+// Create Group Config
+export const CreateGroupConfigSchema = z.object({
+  name: z.string().trim().min(1, "Group name is required"),
+  eventId: z.string(),
+  leadUserId: z.string().min(1, "Lead user is required"),
+  remark: z.string().trim().optional().nullable(),
+  sort: z.number().int().min(0, "Sort order must be 0 or greater").default(0),
+});
+export type CreateGroupConfig = z.infer<typeof CreateGroupConfigSchema>;
+
+// Update Group Config
+export const GroupConfigSchema = z.object({
+  name: z.string().trim().min(1, "Group name is required"),
+  leadUserId: z.string().optional().nullable(),
+  remark: z.string().trim().optional().nullable(),
+  sort: z.number().int().min(0, "Sort order must be 0 or greater").default(0),
+  status: z.number().int().optional(),
+});
+export type GroupConfig = z.infer<typeof GroupConfigSchema>;
