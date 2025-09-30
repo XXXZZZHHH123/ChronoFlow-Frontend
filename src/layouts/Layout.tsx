@@ -3,7 +3,6 @@ import { cn } from "@/lib/utils";
 import { useSidebarToggle } from "@/hooks/system/useSideBarToggle";
 import { Sidebar } from "@/components/side-bar/side-bar";
 import { Navbar } from "@/components/nav-bar/bar";
-import { SidebarSelectionGuard } from "@/pages/events/components/SideBarSelectionGuard";
 
 export default function AppLayout() {
   const { isOpen, setIsOpen } = useSidebarToggle();
@@ -43,8 +42,7 @@ export default function AppLayout() {
           onClick={setIsOpen}
           aria-hidden="true"
         />
-        {/* This component ensures that when navigating away from event-specific pages, the selected event is cleared */}
-        <SidebarSelectionGuard />
+
         {/* Main */}
         <div className="relative z-0 flex min-w-0 grow flex-col">
           <Navbar brand="Current user organisation name" />

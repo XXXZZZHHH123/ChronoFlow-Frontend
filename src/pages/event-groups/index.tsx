@@ -1,6 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
-import { useEventStore } from "@/stores/eventStore";
 import { Card, CardContent } from "@/components/ui/card";
 import { DataTableLoading } from "@/components/data-table/data-table-skeleton";
 import { useGroups } from "@/hooks/groups/useGroups";
@@ -11,14 +10,8 @@ import type { Group } from "@/lib/validation/schema";
 
 export default function SpecificEventGroupPage() {
   const { id } = useParams<{ id: string }>();
-  const setSelectedEventId = useEventStore((s) => s.setSelectedEventId);
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
   const [membersDialogOpen, setMembersDialogOpen] = useState(false);
-
-  useEffect(() => {
-    setSelectedEventId(id ?? null);
-    return () => setSelectedEventId(null);
-  }, [id, setSelectedEventId]);
 
   const {
     groups,
