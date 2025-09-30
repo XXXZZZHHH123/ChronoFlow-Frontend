@@ -1,6 +1,7 @@
-import { useEffect, useState, useCallback } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getMembers } from "@/api/memberApi";
 import type { Member } from "@/lib/validation/schema";
+import { useAuthStore } from "@/stores/authStore";
 
 export type UseMembersType = {
   members: Member[];
@@ -10,33 +11,29 @@ export type UseMembersType = {
 };
 
 export function useMembers(autoFetch: boolean = false): UseMembersType {
-  const [members, setMembers] = useState<Member[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+  const { user } = useAuthStore();
+  const queryClient = useQueryClient();
 
-  const fetchMembers = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const data = await getMembers();
-      setMembers(data);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to fetch members");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const query = useQuery<Member[], Error>({
+    queryKey: ["members", user?.id],
+    queryFn: getMembers,
+    enabled: !!user && autoFetch,
+    staleTime: Infinity,
+    gcTime: 30 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  });
 
-  useEffect(() => {
-    if (autoFetch) {
-      fetchMembers();
-    }
-  }, [autoFetch, fetchMembers]);
+  const onRefresh = async () => {
+    if (!user) return;
+    await queryClient.invalidateQueries({ queryKey: ["members", user.id] });
+  };
 
   return {
-    members,
-    loading,
-    error,
-    onRefresh: fetchMembers,
+    members: query.data ?? [],
+    loading: query.isLoading || query.isFetching,
+    error: query.error ? query.error.message : null,
+    onRefresh,
   };
 }
