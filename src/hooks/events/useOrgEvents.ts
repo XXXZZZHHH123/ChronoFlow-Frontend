@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState, useCallback } from "react";
 import { getEvents } from "@/api/eventApi";
 import type { OrgEvent } from "@/lib/validation/schema";
 
@@ -10,27 +10,33 @@ export type UseOrgEventsType = {
 };
 
 export function useOrgEvents(autoFetch: boolean = false): UseOrgEventsType {
-  const queryClient = useQueryClient();
+  const [events, setEvents] = useState<OrgEvent[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const query = useQuery<OrgEvent[], Error>({
-    queryKey: ["events"],
-    queryFn: getEvents,
-    enabled: autoFetch,
-    staleTime: Infinity,
-    gcTime: 30 * 60 * 1000,
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-  });
+  const fetchEvents = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await getEvents();
+      setEvents(data);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to fetch events");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  const onRefresh = async () => {
-    await queryClient.invalidateQueries({ queryKey: ["events"] });
-  };
+  useEffect(() => {
+    if (autoFetch) {
+      fetchEvents();
+    }
+  }, [autoFetch, fetchEvents]);
 
   return {
-    events: query.data ?? [],
-    loading: query.isLoading || query.isFetching,
-    error: query.error ? query.error.message : null,
-    onRefresh,
+    events,
+    loading,
+    error,
+    onRefresh: fetchEvents,
   };
 }

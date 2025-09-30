@@ -5,10 +5,12 @@ import type { Member } from "@/lib/validation/schema";
 import MemberConfigFormSheet from "../MemberConfigForm";
 import Swal from "sweetalert2";
 import { deleteMember } from "@/api/memberApi";
+import type { RoleOption } from "@/services/role";
+import RoleAssignFormModal from "../RoleAssginmentForm";
 
 export const MemberColumns = (
   onRefresh: () => Promise<void> | void,
-  roleOptions: { id: string; label: string }[]
+  roleOptions: RoleOption[]
 ): ColumnDef<Member>[] => [
   {
     id: "actions",
@@ -66,6 +68,12 @@ export const MemberColumns = (
             member={member}
             onRefresh={onRefresh}
             rolesOptions={roleOptions}
+          />
+          <RoleAssignFormModal
+            userId={member.id}
+            roleOptions={roleOptions}
+            currentRoles={member.roles}
+            onRefresh={onRefresh}
           />
         </div>
       );
@@ -125,7 +133,7 @@ export const MemberColumns = (
     ),
     cell: ({ row }) => {
       const roles = (row.getValue("role_keys") as string[]) ?? [];
-      if (!roles.length) return <div className="flex justify-center">—</div>;
+      if (!roles.length) return <div className="flex justify-center"></div>;
       return (
         <div className="flex justify-center flex-wrap gap-1">
           {roles.map((r) => (

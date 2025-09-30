@@ -2,6 +2,7 @@ import { http } from "@/lib/http";
 import {
   roleResponseSchema,
   type Role,
+  type RoleAssign,
   type RoleConfig,
 } from "@/lib/validation/schema";
 import { unwrap } from "@/lib/utils";
@@ -19,10 +20,15 @@ export async function createRole(input: RoleConfig) {
 
 export async function updateRole(roleId: string, input: RoleConfig) {
   const res = await http.patch(`/system/roles/${roleId}`, input);
-  return unwrap<Role>(res.data);
+  return unwrap(res.data);
 }
 
 export async function deleteRole(roleId: string) {
   const res = await http.delete(`/system/roles/${roleId}`);
-  return unwrap<null>(res.data);
+  return unwrap(res.data);
+}
+
+export async function assignRole(input: RoleAssign) {
+  const res = await http.post("/system/roles/assign", input);
+  return unwrap(res.data);
 }

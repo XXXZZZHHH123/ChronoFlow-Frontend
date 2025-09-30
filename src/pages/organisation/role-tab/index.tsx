@@ -20,11 +20,9 @@ export default function RoleTab({
 
   const { permissions } = usePermissions(autoFetch);
 
-  console.log("Permissions in RoleTab:", permissions);
-
   const columns = useMemo(
     () => RoleColumns(onRolesRefresh, permissions),
-    [onRolesRefresh, permissions]
+    [onRolesRefresh, permissions, roles]
   );
 
   return (
