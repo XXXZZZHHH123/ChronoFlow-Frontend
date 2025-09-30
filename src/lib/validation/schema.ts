@@ -180,6 +180,13 @@ export const roleSchema = z.object({
 export type Role = z.infer<typeof roleSchema>;
 export const roleResponseSchema = z.array(roleSchema);
 
+export const roleAssignSchema = z.object({
+  userId: z.string().trim().min(1, "User ID is required"),
+  roles: z.array(z.string().trim().min(1, "Role ID is required")).min(1, "At least one role must be assigned"),
+});
+
+export type RoleAssign = z.infer<typeof roleAssignSchema>;
+
 export const roleConfigSchema = z.object({
   name: z.string().trim().min(1, "Role name is required"),
   key: z.string().trim().min(1, "Role key is required"),
