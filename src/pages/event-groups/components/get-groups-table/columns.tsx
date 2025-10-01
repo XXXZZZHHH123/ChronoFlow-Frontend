@@ -12,7 +12,7 @@ import {
 import Swal from "sweetalert2";
 import { deleteGroup } from "@/api/groupApi";
 import GroupConfigFormModal from "../GroupConfigForm";
-import { Users, FileText, Trash2 } from "lucide-react";
+import { Users, FileText } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
 
