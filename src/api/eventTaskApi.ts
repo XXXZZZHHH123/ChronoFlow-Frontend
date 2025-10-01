@@ -19,6 +19,7 @@ export async function getEventTasks(eventId: string): Promise<EventTask[]> {
   // return eventTaskListSchema.parse(raw);
 
   // 🔹 Mock sample data
+  console.log("Fetching tasks for event ID:", eventId);
   return [
     {
       id: "task_001",
