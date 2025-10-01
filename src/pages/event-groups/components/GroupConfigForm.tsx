@@ -28,7 +28,12 @@ import {
   type GroupConfig,
   type Group,
 } from "@/lib/validation/schema";
-import { createGroup, updateGroup } from "@/api/groupApi";
+import {
+  createGroup,
+  updateGroup,
+  getGroupMembers,
+  addMembersToGroup,
+} from "@/api/groupApi";
 import { useMembers } from "@/hooks/members/userMember";
 import Swal from "sweetalert2";
 import { Textarea } from "@/components/ui/textarea";
@@ -49,7 +54,6 @@ export default function GroupConfigFormModal({
   const [open, setOpen] = useState(false);
   const isEdit = !!group;
 
-  // 获取所有成员列表
   const { members: allMembers, loading: membersLoading } = useMembers(open);
 
   const form = useForm({
@@ -106,7 +110,21 @@ export default function GroupConfigFormModal({
       let text = "";
 
       if (isEdit && group) {
+        // Update group
         await updateGroup(group.id, values as GroupConfig);
+
+        // If leadUserId changed, ensure the new leader is a member
+        if (values.leadUserId && values.leadUserId !== group.leadUserId) {
+          // Check if new leader is already a member
+          const members = await getGroupMembers(group.id);
+          const isMember = members.some((m) => m.userId === values.leadUserId);
+
+          if (!isMember) {
+            // Add new leader to the group
+            await addMembersToGroup(group.id, [values.leadUserId]);
+          }
+        }
+
         title = "Group updated";
         text = "The group has been updated successfully.";
       } else {
@@ -173,48 +191,46 @@ export default function GroupConfigFormModal({
                 </p>
               </div>
 
-              {/* Lead User */}
-              {!isEdit && (
-                <div className="grid gap-2">
-                  <Label htmlFor="leadUserId">Lead User *</Label>
-                  <Controller
-                    name="leadUserId"
-                    control={control}
-                    render={({ field }) => (
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value || ""}
-                        disabled={membersLoading}
+              {/* Lead User - Show for both create and edit */}
+              <div className="grid gap-2">
+                <Label htmlFor="leadUserId">Lead User {!isEdit && "*"}</Label>
+                <Controller
+                  name="leadUserId"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value || ""}
+                      disabled={membersLoading}
+                    >
+                      <SelectTrigger
+                        id="leadUserId"
+                        className={cn(
+                          errors.leadUserId && "border-destructive"
+                        )}
                       >
-                        <SelectTrigger
-                          id="leadUserId"
-                          className={cn(
-                            errors.leadUserId && "border-destructive"
-                          )}
-                        >
-                          <SelectValue
-                            placeholder={
-                              membersLoading
-                                ? "Loading members..."
-                                : "Select a lead user"
-                            }
-                          />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {allMembers.map((member) => (
-                            <SelectItem key={member.id} value={member.id}>
-                              {member.name} ({member.email})
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
-                  <p className="h-5 text-sm text-destructive">
-                    {errors.leadUserId?.message ?? "\u00A0"}
-                  </p>
-                </div>
-              )}
+                        <SelectValue
+                          placeholder={
+                            membersLoading
+                              ? "Loading members..."
+                              : "Select a lead user"
+                          }
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {allMembers.map((member) => (
+                          <SelectItem key={member.id} value={member.id}>
+                            {member.name} ({member.email})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                <p className="h-5 text-sm text-destructive">
+                  {errors.leadUserId?.message ?? "\u00A0"}
+                </p>
+              </div>
 
               {/* Sort */}
               <div className="grid gap-2">

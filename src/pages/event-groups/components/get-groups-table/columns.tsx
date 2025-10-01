@@ -8,7 +8,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog";
 import Swal from "sweetalert2";
 import { deleteGroup } from "@/api/groupApi";
@@ -53,7 +52,6 @@ function RemarkCell({ remark }: { remark: string | null }) {
               <FileText className="h-5 w-5" />
               Remark
             </DialogTitle>
-            <DialogDescription>Full remark content</DialogDescription>
           </DialogHeader>
           <div className="max-h-[60vh] overflow-y-auto">
             <div className="whitespace-pre-wrap break-words p-4 bg-muted rounded-md">
@@ -77,7 +75,6 @@ function ActionCell({
 }) {
   const isActive = group.status === 0;
 
-  // 如果组是inactive状态，只显示占位符
   if (!isActive) {
     return <div className="text-muted-foreground">—</div>;
   }

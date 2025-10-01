@@ -18,7 +18,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { Loader2, UserMinus, UserPlus } from "lucide-react";
+import { Loader2, Trash2, UserPlus, Crown } from "lucide-react";
 import type { Group, GroupMember } from "@/lib/validation/schema";
 import {
   getGroupMembers,
@@ -45,15 +45,28 @@ export default function GroupMembersDialog({
   const [loading, setLoading] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
   const [isAdding, setIsAdding] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(open);
 
   const { members: allMembers } = useMembers(open);
 
+  // 同步外部 open 状态到内部
   useEffect(() => {
-    if (!open || !group) {
+    setInternalOpen(open);
+  }, [open]);
+
+  // Reset state when dialog closes
+  useEffect(() => {
+    if (!open) {
       setMembers([]);
       setSelectedUsers(new Set());
+      setIsAdding(false);
       return;
     }
+  }, [open]);
+
+  // Fetch members when dialog opens with a group
+  useEffect(() => {
+    if (!open || !group) return;
 
     const fetchMembers = async () => {
       setLoading(true);
@@ -62,6 +75,20 @@ export default function GroupMembersDialog({
         setMembers(data);
       } catch (err) {
         console.error("Failed to load members:", err);
+        await Swal.fire({
+          icon: "error",
+          title: "Failed to load members",
+          text: err instanceof Error ? err.message : "Please try again.",
+          heightAuto: false,
+          customClass: {
+            popup: "rounded-lg border shadow-lg",
+            title: "text-lg font-semibold",
+            htmlContainer: "text-sm text-muted-foreground",
+            confirmButton:
+              "bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-md font-medium",
+          },
+          buttonsStyling: false,
+        });
       } finally {
         setLoading(false);
       }
@@ -73,33 +100,69 @@ export default function GroupMembersDialog({
   const memberUserIds = new Set(members.map((m) => m.userId));
   const availableUsers = allMembers.filter((u) => !memberUserIds.has(u.id));
 
+  // Sort members to show leader first
+  const sortedMembers = [...members].sort((a, b) => {
+    const aIsLeader = group?.leadUserId === a.userId;
+    const bIsLeader = group?.leadUserId === b.userId;
+    if (aIsLeader) return -1;
+    if (bIsLeader) return 1;
+    return 0;
+  });
+
   const handleAddMembers = async () => {
     if (!group || selectedUsers.size === 0) return;
 
     try {
       await addMembersToGroup(group.id, Array.from(selectedUsers));
+
+      // Close dialog first
+      onOpenChange(false);
+
+      // Show success message
       await Swal.fire({
         icon: "success",
         title: "Members added",
         text: `${selectedUsers.size} member(s) added successfully.`,
+        heightAuto: false,
+        customClass: {
+          popup: "rounded-lg border shadow-lg",
+          title: "text-lg font-semibold",
+          htmlContainer: "text-sm text-muted-foreground",
+          confirmButton:
+            "bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-md font-medium",
+        },
+        buttonsStyling: false,
       });
-      setSelectedUsers(new Set());
-      setIsAdding(false);
 
-      const data = await getGroupMembers(group.id);
-      setMembers(data);
+      // Call parent refresh
       onRefresh();
     } catch (err: unknown) {
+      onOpenChange(false);
       await Swal.fire({
         icon: "error",
         title: "Failed to add members",
         text: err instanceof Error ? err.message : "Please try again.",
+        heightAuto: false,
+        customClass: {
+          popup: "rounded-lg border shadow-lg",
+          title: "text-lg font-semibold",
+          htmlContainer: "text-sm text-muted-foreground",
+          confirmButton:
+            "bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-md font-medium",
+        },
+        buttonsStyling: false,
       });
     }
   };
 
   const handleRemoveMember = async (userId: string) => {
     if (!group) return;
+
+    // 暂时隐藏主 Dialog
+    setInternalOpen(false);
+
+    // 等待 Dialog 完全关闭
+    await new Promise((resolve) => setTimeout(resolve, 150));
 
     const result = await Swal.fire({
       title: "Remove member?",
@@ -108,32 +171,72 @@ export default function GroupMembersDialog({
       showCancelButton: true,
       confirmButtonText: "Yes, remove",
       cancelButtonText: "Cancel",
+      heightAuto: false,
+      customClass: {
+        popup: "rounded-lg border shadow-lg",
+        title: "text-lg font-semibold",
+        htmlContainer: "text-sm text-muted-foreground",
+        confirmButton:
+          "bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-md font-medium",
+        cancelButton:
+          "bg-secondary text-secondary-foreground hover:bg-secondary/80 px-4 py-2 rounded-md font-medium",
+        actions: "gap-2",
+      },
+      buttonsStyling: false,
+      reverseButtons: true,
     });
 
-    if (!result.isConfirmed) return;
+    if (!result.isConfirmed) {
+      // 用户取消，恢复显示主 Dialog
+      setInternalOpen(true);
+      return;
+    }
 
     try {
       await removeMembersFromGroup(group.id, [userId]);
+
+      // 不恢复主 Dialog，直接关闭
+      onOpenChange(false);
+
+      // Show success message
       await Swal.fire({
         icon: "success",
         title: "Member removed",
         text: "The member has been removed from the group.",
+        heightAuto: false,
+        customClass: {
+          popup: "rounded-lg border shadow-lg",
+          title: "text-lg font-semibold",
+          htmlContainer: "text-sm text-muted-foreground",
+          confirmButton:
+            "bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-md font-medium",
+        },
+        buttonsStyling: false,
       });
 
-      const data = await getGroupMembers(group.id);
-      setMembers(data);
+      // Call parent refresh
       onRefresh();
     } catch (err: unknown) {
+      onOpenChange(false);
       await Swal.fire({
         icon: "error",
         title: "Failed to remove member",
         text: err instanceof Error ? err.message : "Please try again.",
+        heightAuto: false,
+        customClass: {
+          popup: "rounded-lg border shadow-lg",
+          title: "text-lg font-semibold",
+          htmlContainer: "text-sm text-muted-foreground",
+          confirmButton:
+            "bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-md font-medium",
+        },
+        buttonsStyling: false,
       });
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={internalOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>Manage Members - {group?.name}</DialogTitle>
@@ -162,26 +265,44 @@ export default function GroupMembersDialog({
             ) : (
               <ScrollArea className="h-[200px] border rounded-md p-2">
                 <div className="space-y-2">
-                  {members.map((member) => (
-                    <div
-                      key={member.userId}
-                      className="flex items-center justify-between p-2 rounded hover:bg-muted"
-                    >
-                      <div>
-                        <div className="font-medium">{member.username}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {member.email}
-                        </div>
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleRemoveMember(member.userId)}
+                  {sortedMembers.map((member) => {
+                    const isLeader = group?.leadUserId === member.userId;
+                    return (
+                      <div
+                        key={member.userId}
+                        className="flex items-center justify-between p-2 rounded hover:bg-muted"
                       >
-                        <UserMinus className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
+                        <div className="flex items-center gap-2 flex-1">
+                          {isLeader && (
+                            <Crown className="h-4 w-4 text-yellow-600 flex-shrink-0" />
+                          )}
+                          <div>
+                            <div className="font-medium flex items-center gap-2">
+                              {member.username}
+                              {isLeader && (
+                                <span className="text-xs text-yellow-600 font-semibold">
+                                  (Leader)
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {member.email}
+                            </div>
+                          </div>
+                        </div>
+                        {!isLeader && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleRemoveMember(member.userId)}
+                            className="hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </ScrollArea>
             )}
@@ -210,10 +331,14 @@ export default function GroupMembersDialog({
                 variant="outline"
                 className="w-full"
                 onClick={() => setIsAdding(true)}
-                disabled={availableUsers.length === 0}
+                disabled={membersLoading || availableUsers.length === 0}
               >
                 <UserPlus className="h-4 w-4 mr-2" />
-                Add Members
+                {membersLoading
+                  ? "Loading..."
+                  : availableUsers.length === 0
+                  ? "No available members"
+                  : "Add Members"}
               </Button>
             ) : (
               <div className="space-y-2">

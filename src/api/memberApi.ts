@@ -8,7 +8,7 @@ import {
 } from "@/lib/validation/schema";
 
 export async function getMembers(): Promise<Member[]> {
-  const res = await http.get("/organizer/users");
+  const res = await http.get("/system/group/users");
   const raw = unwrap<Member[]>(res.data);
   return MembersResponseSchema.parse(raw);
 }
