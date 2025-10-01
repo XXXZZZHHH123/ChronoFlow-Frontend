@@ -1,14 +1,11 @@
 import { useNavigate } from "react-router-dom";
-import { useEventStore } from "@/stores/eventStore";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 
 export function GoToEventButton({ id }: { id: string }) {
   const navigate = useNavigate();
-  const setSelectedEventId = useEventStore((s) => s.setSelectedEventId);
 
   const onOpen = () => {
-    setSelectedEventId(id);
     navigate(`/event/${id}/dashboard`);
   };
 

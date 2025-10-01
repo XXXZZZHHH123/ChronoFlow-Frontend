@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getEvents } from "@/api/eventApi";
 import type { OrgEvent } from "@/lib/validation/schema";
+import { useAuthStore } from "@/stores/authStore";
 
 export type UseOrgEventsType = {
   events: OrgEvent[];
@@ -10,28 +11,29 @@ export type UseOrgEventsType = {
 };
 
 export function useOrgEvents(autoFetch: boolean = false): UseOrgEventsType {
-  const [events, setEvents] = useState<OrgEvent[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { user } = useAuthStore();
+  const queryClient = useQueryClient();
 
-  const fetchEvents = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await getEvents();
-      setEvents(data);
-    } catch (e: unknown) {
-      if (e instanceof Error) setError(e.message);
-      else setError("Failed to load events");
-      setEvents([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const query = useQuery<OrgEvent[], Error>({
+    queryKey: ["events", user?.id],
+    queryFn: getEvents,
+    enabled: !!user && autoFetch,
+    staleTime: Infinity,
+    gcTime: 30 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  });
 
-  useEffect(() => {
-    if (autoFetch) void fetchEvents();
-  }, [autoFetch, fetchEvents]);
+  const onRefresh = async () => {
+    if (!user) return;
+    await queryClient.invalidateQueries({ queryKey: ["events", user.id] });
+  };
 
-  return { events: events, loading, error, onRefresh: fetchEvents };
+  return {
+    events: query.data ?? [],
+    loading: query.isLoading || query.isFetching,
+    error: query.error ? query.error.message : null,
+    onRefresh,
+  };
 }

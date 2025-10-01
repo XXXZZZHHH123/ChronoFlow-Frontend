@@ -213,3 +213,79 @@ export const GroupConfigSchema = z.object({
   status: z.number().int().optional(),
 });
 export type GroupConfig = z.infer<typeof GroupConfigSchema>;
+
+//Roles
+export const rolePermissionSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  key: z.string(),
+});
+export type RolePermission = z.infer<typeof rolePermissionSchema>;
+
+export const roleSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  key: z.string(),
+  permissions: z.array(rolePermissionSchema).nullable(),
+});
+export type Role = z.infer<typeof roleSchema>;
+export const roleResponseSchema = z.array(roleSchema);
+
+export const roleAssignSchema = z.object({
+  userId: z.string().trim().min(1, "User ID is required"),
+  roles: z
+    .array(z.string().trim().min(1, "Role ID is required"))
+    .min(1, "At least one role must be assigned"),
+});
+
+export type RoleAssign = z.infer<typeof roleAssignSchema>;
+
+export const roleConfigSchema = z.object({
+  name: z.string().trim().min(1, "Role name is required"),
+  key: z.string().trim().min(1, "Role key is required"),
+  permissions: z.array(z.string()).nullable(),
+});
+
+export type RoleConfig = z.infer<typeof roleConfigSchema>;
+
+//Permissions
+export const permissionSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  key: z.string(),
+  description: z.string().optional().nullable(),
+});
+export type Permission = z.infer<typeof permissionSchema>;
+export const permissionResponseSchema = z.array(permissionSchema);
+export type PermissionListResponse = z.infer<typeof permissionResponseSchema>;
+
+export const permissionConfigSchema = z.object({
+  name: z.string().trim().min(1, "Permission name is required"),
+  key: z.string().trim().min(1, "Permission key is required"),
+  description: z.string().trim().optional(),
+});
+
+export type PermissionConfig = z.infer<typeof permissionConfigSchema>;
+
+//Event Task
+export const eventTaskSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string().nullable().optional(),
+  status: z.number().int().min(0).max(4),
+  startTime: z.string().nullable(),
+  endTime: z.string().nullable(),
+  assignedUser: z
+    .object({
+      id: z.string(),
+      name: z.string(),
+      group: z.object({
+        id: z.string(),
+        name: z.string(),
+      }),
+    })
+    .nullable(),
+});
+
+export const eventTaskListSchema = z.array(eventTaskSchema);
+export type EventTask = z.infer<typeof eventTaskSchema>;

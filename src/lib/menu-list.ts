@@ -1,9 +1,9 @@
 import {
   CalendarDays,
   Users,
-  UserLock,
   LayoutDashboard,
   ListChecks,
+  Building2,
   type LucideIcon,
 } from "lucide-react";
 
@@ -19,15 +19,17 @@ export type Group = { groupLabel: string; menus: Menu[] };
 
 export function getMenuList(
   pathname: string,
-  opts: { hasUser: boolean; selectedEventId: string | null }
+  opts: { hasUser: boolean }
 ): Group[] {
-  const { hasUser, selectedEventId } = opts;
+  const { hasUser } = opts;
   if (!hasUser) return [];
+
+  const selectedEventId = pathname.match(/^\/event\/([^/]+)/)?.[1] ?? null;
 
   if (!selectedEventId) {
     return [
       {
-        groupLabel: "Event Administration",
+        groupLabel: "Administration",
         menus: [
           {
             href: "/events",
@@ -36,43 +38,31 @@ export function getMenuList(
             submenus: [],
             icon: CalendarDays,
           },
-        ],
-      },
-      {
-        groupLabel: "Member Administration",
-        menus: [
           {
-            href: "/members",
-            label: "Members",
-            active: pathname === "/members",
+            href: "/organisation",
+            label: "Organisation",
+            active: pathname === "/organisation",
             submenus: [],
-            icon: Users,
-          },
-          {
-            href: "/roles",
-            label: "Roles",
-            active: pathname === "/roles",
-            submenus: [],
-            icon: UserLock,
+            icon: Building2,
           },
         ],
       },
     ];
   }
 
-  const specificEventBase = `/event/${selectedEventId}`;
-  const specificDashboardPath = `${specificEventBase}/dashboard`;
-  const specificGroupPath = `${specificEventBase}/groups`;
-  const specificTaskPath = `${specificEventBase}/tasks`;
+  const base = `/event/${selectedEventId}`;
+  const dashboardPath = `${base}/dashboard`;
+  const groupPath = `${base}/groups`;
+  const taskPath = `${base}/tasks`;
 
   return [
     {
       groupLabel: "Event Dashboard",
       menus: [
         {
-          href: `${specificEventBase}/dashboard`,
+          href: dashboardPath,
           label: "Overview",
-          active: pathname === specificDashboardPath,
+          active: pathname === dashboardPath,
           submenus: [],
           icon: LayoutDashboard,
         },
@@ -82,16 +72,16 @@ export function getMenuList(
       groupLabel: "Event Management",
       menus: [
         {
-          href: `${specificEventBase}/groups`,
+          href: groupPath,
           label: "Groups",
-          active: pathname === specificGroupPath,
+          active: pathname === groupPath,
           submenus: [],
           icon: Users,
         },
         {
-          href: `${specificEventBase}/tasks`,
+          href: taskPath,
           label: "Tasks",
-          active: pathname === specificTaskPath,
+          active: pathname === taskPath,
           submenus: [],
           icon: ListChecks,
         },

@@ -75,7 +75,11 @@ function ActionCell({
   };
 
   return (
-    <div className="flex gap-2">
+    <div
+      className="w-full flex items-center justify-center gap-2
+                    [&>*]:h-9 [&>*]:px-3"
+    >
+      {" "}
       <GoToEventButton id={ev.id} />
       <Button size="sm" variant="destructive" onClick={onDelete}>
         Delete
@@ -90,7 +94,11 @@ export const OrgEventColumns = (
 ): ColumnDef<OrgEvent>[] => [
   {
     id: "actions",
-    header: "Action",
+    header: ({ column }) => (
+      <div className="flex justify-center w-full">
+        <DataTableColumnHeader column={column} title="Action" />
+      </div>
+    ),
     cell: ({ row }) => <ActionCell ev={row.original} onRefresh={onRefresh} />,
     enableSorting: false,
     enableHiding: false,

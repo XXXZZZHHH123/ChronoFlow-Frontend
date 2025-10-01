@@ -1,4 +1,3 @@
-// src/pages/event-groups/components/GroupMembersDialog.tsx
 import { useEffect, useState } from "react";
 import {
   Dialog,

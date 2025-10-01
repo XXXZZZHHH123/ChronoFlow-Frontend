@@ -1,9 +1,4 @@
-// API shape
-export type OrgSystemRole = {
-  id: string;
-  roleName: string;
-  roleKey: string;
-};
+import { type Role } from "@/lib/validation/schema";
 
 // UI-friendly option
 export type RoleOption = {
@@ -12,13 +7,13 @@ export type RoleOption = {
 };
 
 // Transform API roles into RoleOption[]
-export function buildRoleOptions(roles: OrgSystemRole[]): RoleOption[] {
-  return roles.map((r) => ({ id: r.id, label: r.roleKey }));
+export function buildRoleOptions(roles: Role[]): RoleOption[] {
+  return roles.map((r) => ({ id: r.id, label: r.key }));
 }
 
 // Get all keys (["ADMIN", "MEMBER", ...])
-export function getAllRoleKeys(roles: OrgSystemRole[]): string[] {
-  return roles.map((r) => r.roleKey);
+export function getAllRoleKeys(roles: Role[]): string[] {
+  return roles.map((r) => r.key);
 }
 
 // Resolve IDs to keys

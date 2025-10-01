@@ -14,7 +14,6 @@ import { CollapseMenuButton } from "./collapse-menu-button";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores/authStore";
-import { useEventStore } from "@/stores/eventStore";
 import { useMemo } from "react";
 
 interface MenuProps {
@@ -25,17 +24,14 @@ export function Menu({ isOpen }: MenuProps) {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
-  const selectedEventId = useEventStore((s) => s.selected_event_id);
-  const clearSelectedEvent = useEventStore((s) => s.setSelectedEventId);
 
   const menuList = useMemo(
-    () => getMenuList(pathname, { hasUser: !!user, selectedEventId }),
-    [pathname, user, selectedEventId]
+    () => getMenuList(pathname, { hasUser: !!user }),
+    [pathname, user]
   );
 
   async function handleLogoutClick() {
     await logout();
-    clearSelectedEvent(null);
     navigate("/login", { replace: true });
   }
 

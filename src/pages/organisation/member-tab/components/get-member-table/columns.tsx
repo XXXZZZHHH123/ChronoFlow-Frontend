@@ -5,14 +5,20 @@ import type { Member } from "@/lib/validation/schema";
 import MemberConfigFormSheet from "../MemberConfigForm";
 import Swal from "sweetalert2";
 import { deleteMember } from "@/api/memberApi";
+import type { RoleOption } from "@/services/role";
+import RoleAssignFormModal from "../RoleAssginmentForm";
 
 export const MemberColumns = (
   onRefresh: () => Promise<void> | void,
-  roleOptions: { id: string; label: string }[]
+  roleOptions: RoleOption[]
 ): ColumnDef<Member>[] => [
   {
     id: "actions",
-    header: "Action",
+    header: ({ column }) => (
+      <div className="flex justify-center w-full">
+        <DataTableColumnHeader column={column} title="Action" />
+      </div>
+    ),
     cell: ({ row }) => {
       const member = row.original;
 
@@ -54,7 +60,7 @@ export const MemberColumns = (
       };
 
       return (
-        <div className="flex gap-2">
+        <div className="flex justify-center gap-2">
           <Button size="sm" variant="destructive" onClick={onDelete}>
             Delete
           </Button>
@@ -62,6 +68,12 @@ export const MemberColumns = (
             member={member}
             onRefresh={onRefresh}
             rolesOptions={roleOptions}
+          />
+          <RoleAssignFormModal
+            userId={member.id}
+            roleOptions={roleOptions}
+            currentRoles={member.roles}
+            onRefresh={onRefresh}
           />
         </div>
       );
@@ -72,23 +84,35 @@ export const MemberColumns = (
   {
     accessorKey: "name",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Name" />
+      <div className="flex justify-center w-full">
+        <DataTableColumnHeader column={column} title="Name" />
+      </div>
     ),
-    cell: ({ row }) => <div>{row.getValue("name") ?? ""}</div>,
+    cell: ({ row }) => (
+      <div className="flex justify-center">{row.getValue("name") ?? ""}</div>
+    ),
   },
   {
     accessorKey: "email",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Email" />
+      <div className="flex justify-center w-full">
+        <DataTableColumnHeader column={column} title="Email" />
+      </div>
     ),
-    cell: ({ row }) => <div>{row.getValue("email")}</div>,
+    cell: ({ row }) => (
+      <div className="flex justify-center">{row.getValue("email")}</div>
+    ),
   },
   {
     accessorKey: "phone",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Phone" />
+      <div className="flex justify-center w-full">
+        <DataTableColumnHeader column={column} title="Phone" />
+      </div>
     ),
-    cell: ({ row }) => <div>{row.getValue("phone") ?? ""}</div>,
+    cell: ({ row }) => (
+      <div className="flex justify-center">{row.getValue("phone") ?? ""}</div>
+    ),
   },
   {
     id: "role_keys",
@@ -103,13 +127,15 @@ export const MemberColumns = (
       );
     },
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Roles" />
+      <div className="flex justify-center w-full">
+        <DataTableColumnHeader column={column} title="Roles" />
+      </div>
     ),
     cell: ({ row }) => {
       const roles = (row.getValue("role_keys") as string[]) ?? [];
-      if (!roles.length) return "";
+      if (!roles.length) return <div className="flex justify-center"></div>;
       return (
-        <div className="flex flex-wrap gap-1">
+        <div className="flex justify-center flex-wrap gap-1">
           {roles.map((r) => (
             <span
               key={r}
@@ -131,14 +157,18 @@ export const MemberColumns = (
   {
     accessorKey: "registered",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Registered" />
+      <div className="flex justify-center w-full">
+        <DataTableColumnHeader column={column} title="Registered" />
+      </div>
     ),
     cell: ({ row }) => {
       const val = row.getValue("registered") as boolean;
       return (
-        <span className={val ? "text-green-600" : "text-amber-600"}>
-          {val ? "Yes" : "No"}
-        </span>
+        <div className="flex justify-center">
+          <span className={val ? "text-green-600" : "text-amber-600"}>
+            {val ? "Yes" : "No"}
+          </span>
+        </div>
       );
     },
     filterFn: (row, id, filterValues: string[]) => {
