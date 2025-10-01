@@ -47,7 +47,7 @@ export default function GroupMembersDialog({
   const [isAdding, setIsAdding] = useState(false);
   const [internalOpen, setInternalOpen] = useState(open);
 
-  const { members: allMembers } = useMembers(open);
+  const { members: allMembers, loading: membersLoading } = useMembers(open);
 
   // 同步外部 open 状态到内部
   useEffect(() => {
