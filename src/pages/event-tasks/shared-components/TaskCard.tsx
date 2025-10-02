@@ -14,14 +14,16 @@ import {
   type TaskStatusCode,
 } from "@/services/eventTask";
 import * as React from "react";
+import {
+  deleteEventTaskSample,
+  updateEventTaskSample,
+} from "@/api/eventTasksApi";
 
 interface TaskCardProps {
   task: EventTask;
-  onEdit: (task: EventTask) => void;
-  onDelete: (task: EventTask) => void;
 }
 
-export function TaskCard({ task, onEdit, onDelete }: TaskCardProps) {
+export function TaskCard({ task }: TaskCardProps) {
   const assigneeInitials =
     task.assignedUser?.name
       ?.split(" ")
@@ -99,13 +101,17 @@ export function TaskCard({ task, onEdit, onDelete }: TaskCardProps) {
 
           {/* Actions */}
           <div className="flex gap-2">
-            <Button size="sm" variant="outline" onClick={() => onEdit(task)}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => updateEventTaskSample()}
+            >
               Edit
             </Button>
             <Button
               size="sm"
               variant="destructive"
-              onClick={() => onDelete(task)}
+              onClick={() => deleteEventTaskSample()}
             >
               Delete
             </Button>

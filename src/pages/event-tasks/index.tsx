@@ -1,22 +1,16 @@
 import { useParams } from "react-router-dom";
 import { useMemo, useState } from "react";
 import DynamicTabs, { type TabItem } from "@/components/ui/dynamic-tabs";
-import { useAuthStore } from "@/stores/authStore";
 import { AllTasksTab } from "./all-task-tab";
 import { TasksProvider } from "@/contexts/event-tasks/EventTasksProvider";
 import { useEventTasksContext } from "@/contexts/event-tasks/useEventTasksContext";
+import MyTaskPage from "./my-task-tab";
+import MyAssignTaskPage from "./my-assign-task";
 
 function EventTasksTabs() {
   const [active, setActive] = useState<"all" | "mine">("all");
-  const user = useAuthStore((s) => s.user);
 
-  const { tasks, loading, error } = useEventTasksContext();
-
-  const myTasks = useMemo(() => {
-    const uid = user?.id;
-    if (!uid) return [];
-    return tasks.filter((t) => t.assignedUser?.id === uid);
-  }, [tasks, user?.id]);
+  const {loading, error } = useEventTasksContext();
 
   const tabs: TabItem[] = useMemo(
     () => [
@@ -28,7 +22,7 @@ function EventTasksTabs() {
         ) : error ? (
           <p className="text-red-500">{error}</p>
         ) : (
-          <AllTasksTab tasks={tasks} onEdit={() => {}} onDelete={() => {}} />
+          <AllTasksTab />
         ),
       },
       {
@@ -39,11 +33,22 @@ function EventTasksTabs() {
         ) : error ? (
           <p className="text-red-500">{error}</p>
         ) : (
-          <p>my tasks ({myTasks.length})</p>
+          <MyTaskPage />
+        ),
+      },
+      {
+        label: "My Assigned Tasks",
+        value: "assigned",
+        component: loading ? (
+          <p>Loading…</p>
+        ) : error ? (
+          <p className="text-red-500">{error}</p>
+        ) : (
+          <MyAssignTaskPage />
         ),
       },
     ],
-    [loading, error, tasks, myTasks.length]
+    [loading, error]
   );
 
   return (

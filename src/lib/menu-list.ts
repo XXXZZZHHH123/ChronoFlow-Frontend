@@ -29,6 +29,25 @@ export function getMenuList(
   if (!selectedEventId) {
     return [
       {
+        groupLabel: "Dashboard",
+        menus: [
+          {
+            href: "/member-dashboard",
+            label: "Member",
+            active: pathname === "/member-dashboard",
+            submenus: [],
+            icon: CalendarDays,
+          },
+          {
+            href: "/organiser-dashboard",
+            label: "Organiser",
+            active: pathname === "/organiser-dashboard",
+            submenus: [],
+            icon: CalendarDays,
+          },
+        ],
+      },
+      {
         groupLabel: "Administration",
         menus: [
           {

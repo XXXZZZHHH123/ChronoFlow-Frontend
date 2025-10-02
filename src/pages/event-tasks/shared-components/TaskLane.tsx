@@ -7,8 +7,6 @@ type TaskLaneProps = {
   title: string;
   tasks: EventTask[];
   className?: string;
-  onEdit: (task: EventTask) => void;
-  onDelete: (task: EventTask) => void;
   emptyText?: string;
 };
 
@@ -16,8 +14,6 @@ function TaskLaneBase({
   title,
   tasks,
   className,
-  onEdit,
-  onDelete,
   emptyText = "No tasks",
 }: TaskLaneProps) {
   return (
@@ -43,9 +39,7 @@ function TaskLaneBase({
             {emptyText}
           </div>
         ) : (
-          tasks.map((t) => (
-            <TaskCard key={t.id} task={t} onEdit={onEdit} onDelete={onDelete} />
-          ))
+          tasks.map((t) => <TaskCard key={t.id} task={t} />)
         )}
       </div>
     </section>

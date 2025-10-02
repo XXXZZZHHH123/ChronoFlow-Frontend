@@ -9,6 +9,8 @@ import OrgEventsPage from "@/pages/events";
 import SpecificEventDashboardPage from "@/pages/event-dashboard";
 import SpecificEventGroupsPage from "@/pages/event-groups";
 import SpecificEventTasksPage from "@/pages/event-tasks";
+import OrganiserDashboardPage from "@/pages/organiser-dashboard";
+import MemberDashboardPage from "@/pages/member-dashboard";
 
 const router = createBrowserRouter([
   {
@@ -23,6 +25,8 @@ const router = createBrowserRouter([
         element: <AppLayout />,
         children: [
           { index: true, element: <RootPage /> },
+          { path: "member-dashboard", element: <MemberDashboardPage /> },
+          { path: "organiser-dashboard", element: <OrganiserDashboardPage /> },
           { path: "organisation", element: <OrganisationPage /> },
           { path: "events", element: <OrgEventsPage /> },
           {

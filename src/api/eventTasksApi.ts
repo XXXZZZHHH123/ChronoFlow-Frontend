@@ -94,3 +94,11 @@ export async function getAssignableMembers(
   const raw = unwrap(res.data);
   return assignableMembersResponseSchema.parse(raw);
 }
+
+export async function deleteEventTaskSample() {
+  console.log("deleted");
+}
+
+export async function updateEventTaskSample() {
+  console.log("updated");
+}
