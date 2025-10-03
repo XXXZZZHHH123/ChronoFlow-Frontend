@@ -124,7 +124,10 @@ export function ChartAreaInteractive({ events }: ChartAreaInteractiveProps) {
   }, [isMobile])
 
   const chartData = React.useMemo(() => {
-    const buckets = new Map<number, { registrations: number; openTasks: number }>()
+    const buckets = new Map<
+      number,
+      { registrations: number; openTasks: number; events: number }
+    >()
 
     events.forEach((event) => {
       const day = new Date(event.startTime)
