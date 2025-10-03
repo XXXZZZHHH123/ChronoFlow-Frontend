@@ -4,8 +4,8 @@ import { render, screen, within, fireEvent, waitFor } from "@testing-library/rea
 import userEvent from "@testing-library/user-event"
 
 import { DataTable } from "../components/data-table"
-import { buildMetrics } from "../index"
 import { ChartAreaInteractive } from "../components/chart-area-interactive"
+import { buildMetrics } from "../metrics"
 import type { OrgEvent } from "@/lib/validation/schema"
 
 if (!window.matchMedia) {
@@ -36,13 +36,22 @@ const mocks = vi.hoisted(() => {
 
 vi.mock("exceljs", () => {
   class FakeWorkbook {
+    creator: string
+    created: Date
+    xlsx: { writeBuffer: typeof mocks.writeBufferMock }
+
     constructor() {
       this.creator = ""
       this.created = new Date()
       this.xlsx = { writeBuffer: mocks.writeBufferMock }
     }
 
-    addWorksheet() {
+    addWorksheet(): {
+      columns: never[]
+      addRow: typeof mocks.addRowMock
+      getRow: typeof mocks.getRowMock
+      getColumn: typeof mocks.getColumnMock
+    } {
       return {
         columns: [],
         addRow: mocks.addRowMock,
@@ -227,6 +236,8 @@ describe("DataTable", () => {
     })
 
     expect(addRowMock).toHaveBeenCalledTimes(sampleEvents.length)
+    expect(getRowMock).toHaveBeenCalled()
+    expect(getColumnMock).toHaveBeenCalled()
     expect(writeBufferMock).toHaveBeenCalled()
   })
 })
