@@ -95,6 +95,91 @@ export type Member = z.infer<typeof MemberSchema>;
 export const MembersResponseSchema = z.array(MemberSchema);
 export type MembersResponse = z.infer<typeof MembersResponseSchema>;
 
+const MemberDashboardEventSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string().nullable().optional(),
+  organizerId: z.string().nullable().optional(),
+  location: z.string().nullable().optional(),
+  status: z.number().int(),
+  startTime: z.coerce.date(),
+  endTime: z.coerce.date().nullable().optional(),
+  remark: z.string().nullable().optional(),
+});
+export type MemberDashboardEvent = z.infer<typeof MemberDashboardEventSchema>;
+
+const MemberDashboardAssignmentGroupSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  eventId: z.string(),
+  leadUserId: z.string().nullable().optional(),
+  leadUserName: z.string().nullable().optional(),
+  remark: z.string().nullable().optional(),
+});
+export type MemberDashboardAssignmentGroup = z.infer<
+  typeof MemberDashboardAssignmentGroupSchema
+>;
+
+const MemberDashboardAssignedUserSchema = z.object({
+  id: z.string(),
+  name: z.string().nullable().optional(),
+  email: z.string().nullable().optional(),
+  phone: z.string().nullable().optional(),
+  groups: z
+    .array(MemberDashboardAssignmentGroupSchema)
+    .optional()
+    .default([]),
+});
+export type MemberDashboardAssignedUser = z.infer<
+  typeof MemberDashboardAssignedUserSchema
+>;
+
+const MemberDashboardGroupSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  sort: z.number().int().default(0),
+  leadUserId: z.string().nullable().optional(),
+  leadUserName: z.string().nullable().optional(),
+  remark: z.string().nullable().optional(),
+  status: z.number().int(),
+  event: MemberDashboardEventSchema,
+});
+export type MemberDashboardGroup = z.infer<typeof MemberDashboardGroupSchema>;
+
+const MemberDashboardTaskSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string().nullable().optional(),
+  status: z.number().int(),
+  startTime: z.coerce.date(),
+  endTime: z.coerce.date().nullable().optional(),
+  remark: z.string().nullable().optional(),
+  createTime: z.coerce.date(),
+  updateTime: z.coerce.date(),
+  assignedUser: MemberDashboardAssignedUserSchema.nullable().optional(),
+  event: MemberDashboardEventSchema,
+});
+export type MemberDashboardTask = z.infer<typeof MemberDashboardTaskSchema>;
+
+const MemberDashboardMemberSchema = z.object({
+  id: z.string(),
+  username: z.string(),
+  name: z.string().nullable().optional(),
+  email: z.string().email("Invalid email"),
+  phone: z.string().nullable().optional(),
+  status: z.number().int(),
+  createTime: z.coerce.date(),
+  updateTime: z.coerce.date(),
+});
+export type MemberDashboardMember = z.infer<typeof MemberDashboardMemberSchema>;
+
+export const MemberDashboardSchema = z.object({
+  member: MemberDashboardMemberSchema,
+  groups: z.array(MemberDashboardGroupSchema).default([]),
+  tasks: z.array(MemberDashboardTaskSchema).default([]),
+});
+export type MemberDashboard = z.infer<typeof MemberDashboardSchema>;
+
 export const MemberConfigSchema = z.object({
   email: z.email("Invalid email"),
   roleIds: z.array(z.string()).nonempty("At least one role is required"),
