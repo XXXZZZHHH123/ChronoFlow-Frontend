@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { getMemberDashboard } from "@/api/memberDashboardApi";
+import { getMemberDashboard } from "@/api/memberDashBoardApi";
 import type { MemberDashboard } from "@/lib/validation/schema";
 import { useAuthStore } from "@/stores/authStore";
 
