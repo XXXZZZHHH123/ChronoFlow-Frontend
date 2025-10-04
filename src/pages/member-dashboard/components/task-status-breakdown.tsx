@@ -39,6 +39,10 @@ export function TaskStatusBreakdown({ tasks }: TaskStatusBreakdownProps) {
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         {STATUS_SEQUENCE.map((statusCode) => {
+          if (statusCode == null) {
+            return null;
+          }
+
           const count = counts[statusCode] ?? 0;
           const style = getTaskStatusStyle(statusCode);
           const percentage = totalTasks ? Math.round((count / totalTasks) * 100) : 0;
