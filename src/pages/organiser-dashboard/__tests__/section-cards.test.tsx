@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { render, screen, within } from "@testing-library/react"
 import { IconClockHour4 } from "@tabler/icons-react"
-
 import { SectionCards, type SummaryMetric } from "../components/section-cards"
 
 const sampleMetrics: SummaryMetric[] = [
