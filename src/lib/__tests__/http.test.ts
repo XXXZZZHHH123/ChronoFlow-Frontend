@@ -13,6 +13,14 @@ const originalStore = useAuthStore.getState();
 const originalClear = originalStore.clear;
 const originalSetAuth = originalStore.setAuth;
 
+type RetriableAxiosError = AxiosError & {
+  config: {
+    url?: string;
+    _retry?: boolean;
+    [key: string]: unknown;
+  };
+};
+
 const getRejectedInterceptor = () => {
   const handlers =
     (http.interceptors.response as unknown as { handlers: unknown[] }).handlers;
@@ -20,7 +28,7 @@ const getRejectedInterceptor = () => {
     throw new Error("Response interceptor not registered");
   }
   const handler = handlers[handlers.length - 1] as {
-    rejected: (error: AxiosError & { config: any }) => Promise<unknown>;
+    rejected: (error: RetriableAxiosError) => Promise<unknown>;
   };
   return handler.rejected;
 };
@@ -54,7 +62,7 @@ describe("http response interceptor", () => {
     const error = {
       response: { status: 401 },
       config: { url: "/system/auth/login", _retry: false },
-    } as unknown as AxiosError & { config: { url: string; _retry?: boolean } };
+    } as unknown as RetriableAxiosError;
 
     await expect(rejected(error)).rejects.toBe(error);
 
@@ -69,7 +77,7 @@ describe("http response interceptor", () => {
     const error = {
       response: { status: 401 },
       config: { url: "/secure/data", _retry: true },
-    } as unknown as AxiosError & { config: { url: string; _retry?: boolean } };
+    } as unknown as RetriableAxiosError;
 
     await expect(rejected(error)).rejects.toBe(error);
     expect(refreshMock).not.toHaveBeenCalled();
@@ -93,9 +101,7 @@ describe("http response interceptor", () => {
     const error = {
       response: { status: 401 },
       config: { url: "/secure/data", _retry: false },
-    } as unknown as AxiosError & {
-      config: { url: string; _retry?: boolean };
-    };
+    } as unknown as RetriableAxiosError;
 
     try {
       const result = await rejected(error);
@@ -124,9 +130,7 @@ describe("http response interceptor", () => {
     const error = {
       response: { status: 401 },
       config: { url: "/secure/data", _retry: false },
-    } as unknown as AxiosError & {
-      config: { url: string; _retry?: boolean };
-    };
+    } as unknown as RetriableAxiosError;
 
     await expect(rejected(error)).rejects.toBe(error);
     expect(clearSpy).toHaveBeenCalled();

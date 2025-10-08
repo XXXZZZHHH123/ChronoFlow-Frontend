@@ -44,7 +44,8 @@ const saveAsMock = fileSaverMocks.saveAs;
 
 describe("utils cn", () => {
   it("merges class names intelligently", () => {
-    expect(cn("btn", false && "hidden", "primary")).toBe("btn primary");
+    const shouldHide = false;
+    expect(cn("btn", shouldHide && "hidden", "primary")).toBe("btn primary");
   });
 });
 
