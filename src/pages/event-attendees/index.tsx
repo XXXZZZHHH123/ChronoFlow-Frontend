@@ -14,14 +14,19 @@ import { AttendeeColumns } from "./components/get-event-attendees-table/columns"
 
 export default function EventAttendeesPage() {
   const { id } = useParams<{ id: string }>();
-  if (!id) return <Navigate to="/events" replace />;
+  const eventId: string | null = id ?? null;
 
-  const { attendees, loading, error, onRefresh } = useEventAttendees(id, true);
+  const { attendees, loading, error, onRefresh } = useEventAttendees(
+    eventId,
+    true
+  );
 
   const columns = useMemo(
-    () => AttendeeColumns(id, onRefresh),
-    [id, onRefresh]
+    () => AttendeeColumns(eventId ?? "", onRefresh),
+    [eventId, onRefresh]
   );
+
+  if (!eventId) return <Navigate to="/events" replace />;
 
   return (
     <Card className="rounded-lg border-none">
@@ -46,7 +51,7 @@ export default function EventAttendeesPage() {
           <div className="overflow-x-auto">
             <div className="min-w-[720px]">
               <AttendeeTable
-                eventId={id}
+                eventId={eventId}
                 columns={columns}
                 data={attendees}
                 onRefresh={onRefresh}
