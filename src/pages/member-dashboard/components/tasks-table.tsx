@@ -287,7 +287,7 @@ export function TasksTable({ tasks }: TasksTableProps) {
                       <TableCell className="align-top">
                         <Badge
                           variant="outline"
-                          className={cn("ring-1 ring-inset", style.badge)}
+                          className={cn("ring-1 ring-inset", style.theme)}
                         >
                           {getTaskStatusText(status)}
                         </Badge>
