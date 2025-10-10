@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { FormProvider, Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-
 import {
   Dialog,
   DialogTrigger,
@@ -27,21 +26,15 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import Swal from "sweetalert2";
 
 import {
-  eventTaskConfigSchema,
-  type EventTaskConfig,
+  eventTaskCreateConfigSchema,
+  type EventTaskCreateConfig,
 } from "@/lib/validation/schema";
 import { createEventTask } from "@/api/eventTasksApi";
+import { DateTimePicker } from "@/components/ui/date-time-picker";
 
 type AssigneeOption = { id: string; label: string };
 
@@ -59,15 +52,16 @@ export default function TaskConfigFormModal({
   const [open, setOpen] = useState(false);
   const [assigneeOpen, setAssigneeOpen] = useState(false);
 
-  const form = useForm<EventTaskConfig>({
-    resolver: zodResolver(eventTaskConfigSchema),
+  const form = useForm<EventTaskCreateConfig>({
+    resolver: zodResolver(eventTaskCreateConfigSchema),
     defaultValues: {
+      id: "",
       name: "",
       description: "",
-      status: 0,
-      startTime: "",
-      endTime: "",
-      assignedUserId: "",
+      startTime: undefined,
+      endTime: undefined,
+      targetUserId: undefined,
+      files: undefined,
     },
   });
 
@@ -84,12 +78,13 @@ export default function TaskConfigFormModal({
   useEffect(() => {
     if (!open) return;
     reset({
+      id: undefined,
       name: "",
       description: "",
-      status: 0,
-      startTime: "",
-      endTime: "",
-      assignedUserId: "",
+      startTime: undefined,
+      endTime: undefined,
+      targetUserId: undefined,
+      files: undefined,
     });
   }, [open, reset]);
 
@@ -98,23 +93,16 @@ export default function TaskConfigFormModal({
     [assigneeOptions]
   );
 
-  const selectedAssigneeId = watch("assignedUserId");
-  const selectedAssigneeLabel = selectedAssigneeId
-    ? assigneeIdToLabel.get(selectedAssigneeId) ?? ""
-    : "";
+  const selectedTargetUserId = watch("targetUserId");
+  const selectedAssigneeLabel =
+    selectedTargetUserId != null
+      ? assigneeIdToLabel.get(String(selectedTargetUserId)) ?? ""
+      : "";
 
-  const onSubmit = handleSubmit(async (values: EventTaskConfig) => {
+  const onSubmit = handleSubmit(async (values: EventTaskCreateConfig) => {
     try {
       await createEventTask(eventId, values);
-
-      reset({
-        name: "",
-        description: "",
-        status: 0,
-        startTime: "",
-        endTime: "",
-        assignedUserId: "",
-      });
+      reset();
       setOpen(false);
       await Swal.fire({
         icon: "success",
@@ -140,16 +128,7 @@ export default function TaskConfigFormModal({
       open={open}
       onOpenChange={(v) => {
         setOpen(v);
-        if (!v) {
-          reset({
-            name: "",
-            description: "",
-            status: 0,
-            startTime: "",
-            endTime: "",
-            assignedUserId: "",
-          });
-        }
+        if (!v) reset();
       }}
     >
       <DialogTrigger asChild>
@@ -160,8 +139,7 @@ export default function TaskConfigFormModal({
         <DialogHeader className="px-6 pt-6 pb-4">
           <DialogTitle>Create Task</DialogTitle>
           <DialogDescription>
-            Define a new task for this event, set status and (optionally) assign
-            a user.
+            Create a new task with details, schedule and assignee.
           </DialogDescription>
         </DialogHeader>
 
@@ -170,10 +148,10 @@ export default function TaskConfigFormModal({
             <form onSubmit={onSubmit} noValidate className="grid gap-5">
               {/* Name */}
               <div className="grid gap-2">
-                <Label htmlFor="name">Task Name</Label>
+                <Label htmlFor="name">Task name</Label>
                 <Input
                   id="name"
-                  placeholder="Registration System Setup"
+                  placeholder="Event registration setup"
                   {...register("name")}
                   aria-invalid={!!errors.name}
                 />
@@ -196,70 +174,51 @@ export default function TaskConfigFormModal({
                 </p>
               </div>
 
-              {/* Status */}
+              {/* Start Time */}
               <div className="grid gap-2">
-                <Label>Status</Label>
+                <Label>Start time (optional)</Label>
                 <Controller
-                  name="status"
+                  name="startTime"
                   control={control}
                   render={({ field }) => (
                     <>
-                      <Select
-                        value={String(field.value ?? 0)}
-                        onValueChange={(v) => field.onChange(Number(v))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="0">Pending</SelectItem>
-                          <SelectItem value="1">In Progress</SelectItem>
-                          <SelectItem value="2">Completed</SelectItem>
-                          <SelectItem value="3">Delayed</SelectItem>
-                          <SelectItem value="4">Blocked</SelectItem>
-                          <SelectItem value="5">Pending Approval</SelectItem>
-                          <SelectItem value="6">Rejected</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <DateTimePicker
+                        date={field.value ?? undefined}
+                        setDateTime={(d) => field.onChange(d ?? undefined)}
+                      />
                       <p className="h-5 text-sm text-destructive">
-                        {errors.status?.message ?? "\u00A0"}
+                        {errors.startTime?.message ?? "\u00A0"}
                       </p>
                     </>
                   )}
                 />
               </div>
 
-              {/* Start Time */}
-              <div className="grid gap-2">
-                <Label htmlFor="startTime">Start Time (optional)</Label>
-                <Input
-                  id="startTime"
-                  type="datetime-local"
-                  {...register("startTime")}
-                />
-                <p className="h-5 text-sm text-destructive">
-                  {errors.startTime?.message ?? "\u00A0"}
-                </p>
-              </div>
-
               {/* End Time */}
               <div className="grid gap-2">
-                <Label htmlFor="endTime">End Time (optional)</Label>
-                <Input
-                  id="endTime"
-                  type="datetime-local"
-                  {...register("endTime")}
+                <Label>End time (optional)</Label>
+                <Controller
+                  name="endTime"
+                  control={control}
+                  render={({ field }) => (
+                    <>
+                      <DateTimePicker
+                        date={field.value ?? undefined}
+                        setDateTime={(d) => field.onChange(d ?? undefined)}
+                      />
+                      <p className="h-5 text-sm text-destructive">
+                        {errors.endTime?.message ?? "\u00A0"}
+                      </p>
+                    </>
+                  )}
                 />
-                <p className="h-5 text-sm text-destructive">
-                  {errors.endTime?.message ?? "\u00A0"}
-                </p>
               </div>
 
-              {/* Assignee */}
+              {/* Assignee (targetUserId) */}
               <div className="grid gap-2">
-                <Label>Assignee (optional)</Label>
+                <Label>Assignee</Label>
                 <Controller
-                  name="assignedUserId"
+                  name="targetUserId"
                   control={control}
                   render={({ field }) => (
                     <>
@@ -273,7 +232,7 @@ export default function TaskConfigFormModal({
                             variant="outline"
                             className={cn(
                               "w-full justify-between",
-                              !field.value && "text-muted-foreground"
+                              field.value == null && "text-muted-foreground"
                             )}
                             disabled={assigneeOptions.length === 0}
                           >
@@ -294,7 +253,10 @@ export default function TaskConfigFormModal({
                                     key={opt.id}
                                     value={opt.label}
                                     onSelect={() => {
-                                      field.onChange(opt.id);
+                                      const num = Number(opt.id);
+                                      field.onChange(
+                                        Number.isFinite(num) ? num : undefined
+                                      );
                                       setAssigneeOpen(false);
                                     }}
                                     className="cursor-pointer"
@@ -308,23 +270,52 @@ export default function TaskConfigFormModal({
                         </PopoverContent>
                       </Popover>
                       <p className="h-5 text-sm text-destructive">
-                        {errors.assignedUserId?.message ?? "\u00A0"}
+                        {errors.targetUserId?.message ?? "\u00A0"}
                       </p>
                     </>
                   )}
                 />
-                {selectedAssigneeId && (
+                {selectedTargetUserId != null && (
                   <div className="flex justify-end">
                     <Button
                       type="button"
                       variant="ghost"
                       className="h-8 px-2 text-xs"
-                      onClick={() => setValue("assignedUserId", "")}
+                      onClick={() =>
+                        setValue("targetUserId", "", { shouldValidate: true })
+                      }
                     >
                       Clear assignee
                     </Button>
                   </div>
                 )}
+              </div>
+
+              {/* Files */}
+              <div className="grid gap-2">
+                <Label htmlFor="files">Attachments (optional)</Label>
+                <Controller
+                  name="files"
+                  control={control}
+                  render={({ field }) => (
+                    <>
+                      <Input
+                        id="files"
+                        type="file"
+                        multiple
+                        onChange={(e) => {
+                          const fl = e.target.files;
+                          field.onChange(
+                            fl && fl.length > 0 ? Array.from(fl) : undefined
+                          );
+                        }}
+                      />
+                      <p className="h-5 text-sm text-muted-foreground">
+                        Accepted: any file type supported by your backend
+                      </p>
+                    </>
+                  )}
+                />
               </div>
 
               <Button

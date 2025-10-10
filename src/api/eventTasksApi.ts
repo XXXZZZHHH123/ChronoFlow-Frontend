@@ -5,7 +5,7 @@ import {
   eventTaskListSchema,
   type EventGroupWithAssignableMembers,
   type EventTask,
-  type EventTaskConfig,
+  type EventTaskCreateConfig,
 } from "@/lib/validation/schema";
 
 export async function getEventTasks(eventId: string): Promise<EventTask[]> {
@@ -14,7 +14,7 @@ export async function getEventTasks(eventId: string): Promise<EventTask[]> {
   return eventTaskListSchema.parse(raw);
 }
 
-export async function createEventTask(eventId: string, input: EventTaskConfig) {
+export async function createEventTask(eventId: string, input: EventTaskCreateConfig) {
   const res = await http.post(`/system/task/${eventId}`, input);
   return unwrap(res.data);
 }
@@ -22,7 +22,7 @@ export async function createEventTask(eventId: string, input: EventTaskConfig) {
 export async function updateEventTask(
   eventId: string,
   taskId: string,
-  input: EventTaskConfig
+  input: EventTaskCreateConfig
 ) {
   const res = await http.patch(
     `/system/task/${eventId}/${taskId}`,

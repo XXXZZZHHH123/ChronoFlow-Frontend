@@ -165,3 +165,53 @@ export function getInitialName(name?: string): string {
       .slice(0, 2) || "?"
   );
 }
+
+//Action Type generals
+export const TaskActionEnum = {
+  CREATE: 1,
+  ASSIGN: 2,
+  DELETE: 3,
+  UPDATE: 4,
+  SUBMIT: 5,
+  BLOCK: 6,
+  ACCEPT: 7,
+  REJECT: 8,
+  APPROVE: 9,
+} as const;
+
+export type TaskActionEnumType =
+  (typeof TaskActionEnum)[keyof typeof TaskActionEnum];
+
+// Assignee Task Progress Action;
+export const AssigneeTaskProgressActions = [
+  {
+    label: "Update",
+    value: TaskActionEnum.UPDATE,
+    description: "Make changes to the task’s details or progress information.",
+  },
+  {
+    label: "Submit",
+    value: TaskActionEnum.SUBMIT,
+    description: "Mark the task as completed and submit it for approval.",
+  },
+  {
+    label: "Block",
+    value: TaskActionEnum.BLOCK,
+    description:
+      "Indicate that progress is halted due to an issue or dependency.",
+  },
+] as const;
+
+export const AssigneeTaskDecisionActions = [
+  {
+    label: "Accept",
+    value: TaskActionEnum.ACCEPT,
+    description: "Acknowledge and approve the submitted work as complete.",
+  },
+  {
+    label: "Reject",
+    value: TaskActionEnum.REJECT,
+    description:
+      "Decline the submitted work and request further updates or corrections.",
+  },
+] as const;

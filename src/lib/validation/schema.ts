@@ -1,3 +1,4 @@
+import { allowedUpdateActions, type UpdateAction } from "@/services/eventTask";
 import { z } from "zod";
 
 //Login
@@ -394,15 +395,65 @@ export const eventTaskSchema = z.object({
 export const eventTaskListSchema = z.array(eventTaskSchema);
 export type EventTask = z.infer<typeof eventTaskSchema>;
 
-export const eventTaskConfigSchema = z.object({
-  id: z.string().optional(),
-  name: z.string().min(1, "Task name is required"),
-  description: z.string().nullable().optional(),
-  status: z.number().int().min(0).max(6),
-  startTime: z.string().nullable().optional(),
-  endTime: z.string().nullable().optional(),
-  assignedUserId: z.string().nullable().optional(),
-});
+export const eventTaskCreateConfigSchema = z
+  .object({
+    id: z.string().optional(),
+    name: z.string().trim().min(1, "Task name is required"),
+    description: z.string().trim().optional().nullable(),
+    startTime: z.date().optional(),
+    endTime: z.date().optional(),
+    remark: z.string().trim().optional().nullable(),
+    targetUserId: z.string().min(1, "Assigned user is required"),
+    files: z
+      .array(
+        z.instanceof(File, {
+          message: "Each item must be a valid file",
+        })
+      )
+      .optional(),
+  })
+  .superRefine(({ startTime, endTime }, ctx) => {
+    if (startTime && endTime && endTime.getTime() < startTime.getTime()) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["endTime"],
+        message: "End time cannot be earlier than start time",
+      });
+    }
+  });
+
+export type EventTaskCreateConfig = z.infer<typeof eventTaskCreateConfigSchema>;
+
+// General event task update config (for different update actions)
+export const eventTaskConfigSchema = z
+  .object({
+    name: z.string().trim().optional(),
+    description: z.string().trim().optional().nullable(),
+    type: z
+      .union(
+        allowedUpdateActions.map((a) => z.literal(a)) as [
+          z.ZodLiteral<UpdateAction>,
+          ...z.ZodLiteral<UpdateAction>[]
+        ]
+      )
+      .optional()
+      .describe("Task action type (only valid update actions allowed)"),
+    targetUserId: z.string().optional(),
+    startTime: z.date().optional(),
+    endTime: z.date().optional(),
+    files: z
+      .array(z.instanceof(File, { message: "Each item must be a valid file" }))
+      .optional(),
+  })
+  .superRefine(({ startTime, endTime }, ctx) => {
+    if (startTime && endTime && endTime.getTime() < startTime.getTime()) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["endTime"],
+        message: "End time cannot be earlier than start time",
+      });
+    }
+  });
 
 export type EventTaskConfig = z.infer<typeof eventTaskConfigSchema>;
 
