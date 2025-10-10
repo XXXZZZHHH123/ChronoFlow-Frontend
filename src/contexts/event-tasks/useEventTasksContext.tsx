@@ -1,5 +1,6 @@
 import { createContext, useContext } from "react";
 import type { EventTask } from "@/lib/validation/schema";
+import type { AssigneeOption } from "@/services/eventTask";
 
 export type TasksContextValue = {
   allTasks: EventTask[];
@@ -9,6 +10,7 @@ export type TasksContextValue = {
   error: string | null;
   onRefresh: () => Promise<void>;
   eventId: string | null;
+  assignableMembers: AssigneeOption[];
 };
 
 export const TasksContext = createContext<TasksContextValue | undefined>(

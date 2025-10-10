@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { FormProvider, Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -35,32 +35,32 @@ import {
 } from "@/lib/validation/schema";
 import { createEventTask } from "@/api/eventTasksApi";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
+import type { AssigneeOption } from "@/services/eventTask";
+import { AttachmentsField } from "./AttachmentField";
 
-type AssigneeOption = { id: string; label: string };
-
-type TaskConfigFormProps = {
+type TaskConfigCreateFormProps = {
   eventId: string;
   onRefresh: () => void;
   assigneeOptions: AssigneeOption[];
 };
 
-export default function TaskConfigFormModal({
+export default function TaskConfigCreateFormModal({
   eventId,
   onRefresh,
   assigneeOptions,
-}: TaskConfigFormProps) {
+}: TaskConfigCreateFormProps) {
   const [open, setOpen] = useState(false);
   const [assigneeOpen, setAssigneeOpen] = useState(false);
 
   const form = useForm<EventTaskCreateConfig>({
     resolver: zodResolver(eventTaskCreateConfigSchema),
     defaultValues: {
-      id: "",
+      id: undefined,
       name: "",
       description: "",
       startTime: undefined,
       endTime: undefined,
-      targetUserId: undefined,
+      targetUserId: "", 
       files: undefined,
     },
   });
@@ -83,21 +83,12 @@ export default function TaskConfigFormModal({
       description: "",
       startTime: undefined,
       endTime: undefined,
-      targetUserId: undefined,
+      targetUserId: "",
       files: undefined,
     });
   }, [open, reset]);
 
-  const assigneeIdToLabel = useMemo(
-    () => new Map(assigneeOptions.map((o) => [o.id, o.label] as const)),
-    [assigneeOptions]
-  );
-
   const selectedTargetUserId = watch("targetUserId");
-  const selectedAssigneeLabel =
-    selectedTargetUserId != null
-      ? assigneeIdToLabel.get(String(selectedTargetUserId)) ?? ""
-      : "";
 
   const onSubmit = handleSubmit(async (values: EventTaskCreateConfig) => {
     try {
@@ -122,6 +113,10 @@ export default function TaskConfigFormModal({
       });
     }
   });
+
+  const selectedAssigneeLabel = selectedTargetUserId
+    ? assigneeOptions.find((o) => o.id === selectedTargetUserId)?.label ?? ""
+    : "";
 
   return (
     <Dialog
@@ -232,7 +227,7 @@ export default function TaskConfigFormModal({
                             variant="outline"
                             className={cn(
                               "w-full justify-between",
-                              field.value == null && "text-muted-foreground"
+                              !field.value && "text-muted-foreground"
                             )}
                             disabled={assigneeOptions.length === 0}
                           >
@@ -253,10 +248,7 @@ export default function TaskConfigFormModal({
                                     key={opt.id}
                                     value={opt.label}
                                     onSelect={() => {
-                                      const num = Number(opt.id);
-                                      field.onChange(
-                                        Number.isFinite(num) ? num : undefined
-                                      );
+                                      field.onChange(opt.id); // keep as string
                                       setAssigneeOpen(false);
                                     }}
                                     className="cursor-pointer"
@@ -275,7 +267,7 @@ export default function TaskConfigFormModal({
                     </>
                   )}
                 />
-                {selectedTargetUserId != null && (
+                {!!selectedTargetUserId && (
                   <div className="flex justify-end">
                     <Button
                       type="button"
@@ -292,31 +284,11 @@ export default function TaskConfigFormModal({
               </div>
 
               {/* Files */}
-              <div className="grid gap-2">
-                <Label htmlFor="files">Attachments (optional)</Label>
-                <Controller
-                  name="files"
-                  control={control}
-                  render={({ field }) => (
-                    <>
-                      <Input
-                        id="files"
-                        type="file"
-                        multiple
-                        onChange={(e) => {
-                          const fl = e.target.files;
-                          field.onChange(
-                            fl && fl.length > 0 ? Array.from(fl) : undefined
-                          );
-                        }}
-                      />
-                      <p className="h-5 text-sm text-muted-foreground">
-                        Accepted: any file type supported by your backend
-                      </p>
-                    </>
-                  )}
-                />
-              </div>
+              <AttachmentsField
+                control={control}
+                name={"files"}
+                helperText="Accepted: common file types such as documents, images, and PDFs."
+              />
 
               <Button
                 type="submit"

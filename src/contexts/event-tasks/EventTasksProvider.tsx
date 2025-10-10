@@ -1,8 +1,14 @@
 import React, { useMemo } from "react";
 import { useEventTasks } from "@/hooks/event-tasks/useEventTasks";
+import { useAssignableMembers } from "@/hooks/event-tasks/useAssignableMembers";
 import { TasksContext, type TasksContextValue } from "./useEventTasksContext";
 import { useAuthStore } from "@/stores/authStore";
-import { filterMyTasks, filterMyAssignedTasks } from "@/services/eventTask";
+import {
+  filterMyTasks,
+  filterMyAssignedTasks,
+  type AssigneeOption,
+  getAssignableMembersOptions,
+} from "@/services/eventTask";
 
 type TasksProviderProps = {
   eventId: string | null;
@@ -19,11 +25,15 @@ export function TasksProvider({
     eventId,
     autoFetch
   );
+  const { groups } = useAssignableMembers(eventId, autoFetch);
   const currentUserId = useAuthStore((s) => s.user?.id ?? "");
 
   const value: TasksContextValue = useMemo(() => {
     const myTasks = filterMyTasks(tasks, currentUserId);
     const myAssignedTasks = filterMyAssignedTasks(tasks, currentUserId);
+
+    const assignableMembers: AssigneeOption[] =
+      getAssignableMembersOptions(groups);
 
     return {
       allTasks: tasks,
@@ -33,8 +43,9 @@ export function TasksProvider({
       error,
       onRefresh,
       eventId,
+      assignableMembers,
     };
-  }, [tasks, loading, error, onRefresh, eventId, currentUserId]);
+  }, [tasks, groups, loading, error, onRefresh, eventId, currentUserId]);
 
   return (
     <TasksContext.Provider value={value}>{children}</TasksContext.Provider>

@@ -17,13 +17,9 @@ import {
   deleteEventTaskSample,
   updateEventTaskSample,
 } from "@/api/eventTasksApi";
-import { ArrowRight, ChevronUp, Info } from "lucide-react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { ArrowRight, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 
 interface TaskCardProps {
   task: EventTask;
@@ -34,9 +30,9 @@ export function TaskCard({ task }: TaskCardProps) {
   const assignerInitials = getInitialName(task.assignerUser?.name) || "??";
 
   const dueText = React.useMemo(() => {
-    if (!task.endTime) return "—";
+    if (!task.endTime) return "No Due Date";
     const date = new Date(task.endTime);
-    if (Number.isNaN(date.getTime())) return "—";
+    if (Number.isNaN(date.getTime())) return "No Due Date";
     return date.toLocaleString(undefined, {
       year: "numeric",
       month: "short",
@@ -46,6 +42,9 @@ export function TaskCard({ task }: TaskCardProps) {
       hour12: true,
     });
   }, [task.endTime]);
+
+  const isScheduled =
+    !!task.endTime && !Number.isNaN(new Date(task.endTime).getTime());
 
   const [isOpen, setIsOpen] = React.useState(true);
 
@@ -133,18 +132,25 @@ export function TaskCard({ task }: TaskCardProps) {
 
           {/* Due date + optional remark icon */}
           <div className="flex items-center justify-between text-xs text-muted-foreground mt-2">
-            <span>Due: {dueText}</span>
+            <div className="flex items-center gap-2">
+              <span>Due:</span>
 
-            {task.remark && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Info className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" />
-                </TooltipTrigger>
-                <TooltipContent side="left" className="max-w-[250px]">
-                  <p className="text-xs">{task.remark}</p>
-                </TooltipContent>
-              </Tooltip>
-            )}
+              {isScheduled ? (
+                <Badge
+                  variant="secondary"
+                  className="bg-rose-100 text-rose-700 ring-1 ring-rose-200 font-medium"
+                >
+                  {dueText}
+                </Badge>
+              ) : (
+                <Badge
+                  variant="secondary"
+                  className="bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200 font-medium"
+                >
+                  {dueText}
+                </Badge>
+              )}
+            </div>
           </div>
 
           {/* Actions */}
@@ -156,7 +162,7 @@ export function TaskCard({ task }: TaskCardProps) {
                 variant="outline"
                 onClick={() => updateEventTaskSample()}
               >
-                Edit
+                Update
               </Button>
               <Button
                 size="sm"

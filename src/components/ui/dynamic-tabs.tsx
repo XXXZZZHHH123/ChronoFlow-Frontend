@@ -15,6 +15,7 @@ interface DynamicTabsProps {
   selectedTab?: string;
   onTabChange?: (tab: string) => void;
   mountStrategy?: MountStrategy;
+  headerRight?: React.ReactNode;
 }
 
 export default function DynamicTabs({
@@ -23,6 +24,7 @@ export default function DynamicTabs({
   selectedTab,
   onTabChange,
   mountStrategy = "lazy",
+  headerRight,
 }: DynamicTabsProps) {
   const [internalTab, setInternalTab] = useState(defaultTab);
 
@@ -49,13 +51,18 @@ export default function DynamicTabs({
 
   return (
     <Tabs value={currentTab} onValueChange={handleChange} className="w-full">
-      <TabsList>
-        {tabs.map((tab) => (
-          <TabsTrigger key={tab.value} value={tab.value}>
-            {tab.label}
-          </TabsTrigger>
-        ))}
-      </TabsList>
+      <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <TabsList className="w-full sm:w-auto">
+          {tabs.map((tab) => (
+            <TabsTrigger key={tab.value} value={tab.value}>
+              {tab.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+
+        {/* Right-side slot (defaults to empty) */}
+        <div className="w-full sm:w-auto">{headerRight ?? null}</div>
+      </div>
 
       {mountStrategy === "eager"
         ? tabs.map((tab) => (

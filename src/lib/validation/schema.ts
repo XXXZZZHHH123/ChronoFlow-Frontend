@@ -359,7 +359,6 @@ export const eventTaskSchema = z.object({
   status: z.number().int(), // backend currently returns 0..?
   startTime: z.string().nullable(),
   endTime: z.string().nullable(),
-  remark: z.string().nullable(),
   createTime: z.string().nullable(),
   updateTime: z.string().nullable(),
   assignerUser: z.object({

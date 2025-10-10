@@ -7,6 +7,7 @@ import {
   type EventTask,
   type EventTaskCreateConfig,
 } from "@/lib/validation/schema";
+import { buildTaskCreateFormData } from "@/services/eventTask";
 
 export async function getEventTasks(eventId: string): Promise<EventTask[]> {
   const res = await http.get(`/system/task/${eventId}`);
@@ -14,8 +15,16 @@ export async function getEventTasks(eventId: string): Promise<EventTask[]> {
   return eventTaskListSchema.parse(raw);
 }
 
-export async function createEventTask(eventId: string, input: EventTaskCreateConfig) {
-  const res = await http.post(`/system/task/${eventId}`, input);
+export async function createEventTask(
+  eventId: string,
+  input: EventTaskCreateConfig
+) {
+  const form = buildTaskCreateFormData(input);
+
+  const res = await http.post(`/system/task/${eventId}`, form, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
   return unwrap(res.data);
 }
 
@@ -24,17 +33,14 @@ export async function updateEventTask(
   taskId: string,
   input: EventTaskCreateConfig
 ) {
-  const res = await http.patch(
-    `/system/task/${eventId}/${taskId}`,
-    input
-  );
+  const res = await http.patch(`/system/task/${eventId}/${taskId}`, input);
   return unwrap(res.data);
 }
 
 export async function getAssignableMembers(
   eventId: string
 ): Promise<EventGroupWithAssignableMembers[]> {
-  const res = await http.get(`/system/events/${eventId}/assignable-members`);
+  const res = await http.get(`/system/events/${eventId}/assignable-member`);
   const raw = unwrap(res.data);
   return assignableMembersResponseSchema.parse(raw);
 }

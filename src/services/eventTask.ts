@@ -1,7 +1,11 @@
-import type { EventTask } from "@/lib/validation/schema";
+import type {
+  EventGroupWithAssignableMembers,
+  EventTask,
+  EventTaskCreateConfig,
+} from "@/lib/validation/schema";
 
 /* ──────────────────────────────────────────────────────────────────────────────
- *  Task Status (Backend-aligned)
+ *  Task Statuses & Styles
  * ────────────────────────────────────────────────────────────────────────────── */
 
 export type TaskStatusCode =
@@ -14,6 +18,19 @@ export type TaskStatusCode =
   | 6 // Rejected
   | null
   | undefined;
+
+export const TaskStatusEnum = {
+  PENDING: 0,
+  IN_PROGRESS: 1,
+  COMPLETED: 2,
+  DELAYED: 3,
+  BLOCKED: 4,
+  PENDING_APPROVAL: 5,
+  REJECTED: 6,
+} as const;
+
+export type TaskStatusEnumType =
+  (typeof TaskStatusEnum)[keyof typeof TaskStatusEnum];
 
 const STATUS_META: Record<
   Exclude<TaskStatusCode, null | undefined>,
@@ -77,7 +94,7 @@ export function getTaskStatusStyle(status: TaskStatusCode): {
 }
 
 /* ──────────────────────────────────────────────────────────────────────────────
- *  Board Categorization (matches backend statuses)
+ *  Board Categorization
  * ────────────────────────────────────────────────────────────────────────────── */
 
 export type BoardBuckets = {
@@ -166,7 +183,7 @@ export function getInitialName(name?: string): string {
   );
 }
 
-//Action Type generals
+//Action Type
 export const TaskActionEnum = {
   CREATE: 1,
   ASSIGN: 2,
@@ -181,6 +198,19 @@ export const TaskActionEnum = {
 
 export type TaskActionEnumType =
   (typeof TaskActionEnum)[keyof typeof TaskActionEnum];
+
+//Update action only
+export const allowedUpdateActions = [
+  TaskActionEnum.ASSIGN,
+  TaskActionEnum.UPDATE,
+  TaskActionEnum.SUBMIT,
+  TaskActionEnum.BLOCK,
+  TaskActionEnum.ACCEPT,
+  TaskActionEnum.REJECT,
+  TaskActionEnum.APPROVE,
+] as const;
+
+export type UpdateAction = (typeof allowedUpdateActions)[number];
 
 // Assignee Task Progress Action;
 export const AssigneeTaskProgressActions = [
@@ -215,3 +245,93 @@ export const AssigneeTaskDecisionActions = [
       "Decline the submitted work and request further updates or corrections.",
   },
 ] as const;
+
+export const AssignerTaskActions = [
+  {
+    label: "Assign",
+    value: TaskActionEnum.ASSIGN,
+    description: "Reassign the task to another member or update the assignee.",
+  },
+  {
+    label: "Update",
+    value: TaskActionEnum.UPDATE,
+    description: "Modify task details or adjust deadlines and descriptions.",
+  },
+  {
+    label: "Block",
+    value: TaskActionEnum.BLOCK,
+    description:
+      "Mark the task as blocked due to external dependencies or issues.",
+  },
+] as const;
+
+export const AssignerApprovalTaskActions = [
+  {
+    label: "Approve",
+    value: TaskActionEnum.APPROVE,
+    description:
+      "Confirm and approve the task completion after submission by the assignee.",
+  },
+] as const;
+
+/* ──────────────────────────────────────────────────────────────────────────────
+ *  Assignee Member Options for Select Input
+ * ────────────────────────────────────────────────────────────────────────────── */
+export type AssigneeOption = { id: string; label: string };
+
+export function getAssignableMembersOptions(
+  groups: EventGroupWithAssignableMembers[]
+): AssigneeOption[] {
+  const seen = new Set<string>();
+
+  return groups.flatMap((group) =>
+    group.members
+      .filter((m) => {
+        if (seen.has(m.id)) return false;
+        seen.add(m.id);
+        return true;
+      })
+      .map((m) => ({
+        id: m.id,
+        label: `${m.username} (${group.name})`,
+      }))
+  );
+}
+
+/* ──────────────────────────────────────────────────────────────────────────────
+ *  Create task payload helper
+ * ────────────────────────────────────────────────────────────────────────────── */
+function fmtLocal(d?: Date) {
+  if (!d) return undefined;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const yyyy = d.getFullYear();
+  const MM = pad(d.getMonth() + 1);
+  const dd = pad(d.getDate());
+  const hh = pad(d.getHours());
+  const mm = pad(d.getMinutes());
+  const ss = pad(d.getSeconds());
+  return `${yyyy}-${MM}-${dd}T${hh}:${mm}:${ss}`;
+}
+
+/** Build FormData from EventTaskCreateConfig */
+export function buildTaskCreateFormData(
+  input: EventTaskCreateConfig
+): FormData {
+  const form = new FormData();
+
+  form.append("name", input.name);
+  form.append("targetUserId", String(input.targetUserId));
+
+  if (input.description != null) form.append("description", input.description);
+  if (input.remark != null) form.append("remark", input.remark);
+
+  const start = fmtLocal(input.startTime);
+  const end = fmtLocal(input.endTime);
+  if (start) form.append("startTime", start);
+  if (end) form.append("endTime", end);
+
+  if (input.files?.length) {
+    for (const f of input.files) form.append("files", f, f.name);
+  }
+  return form;
+}
