@@ -365,6 +365,7 @@ export const eventTaskSchema = z.object({
   endTime: z.string().nullable(),
   createTime: z.string().nullable(),
   updateTime: z.string().nullable(),
+  remark: z.string().nullable(),
   assignerUser: z.object({
     id: z.string(),
     name: z.string(),
@@ -431,7 +432,7 @@ export type EventTaskCreateConfig = z.infer<typeof eventTaskCreateConfigSchema>;
 // General event task update config (for different update actions)
 export const eventTaskConfigSchema = z
   .object({
-    name: z.string().trim().optional(),
+    name: z.string().trim().min(1, "Name is required"),
     description: z.string().trim().optional().nullable(),
     type: z
       .union(
@@ -445,6 +446,7 @@ export const eventTaskConfigSchema = z
     targetUserId: z.string().optional(),
     startTime: z.date().optional(),
     endTime: z.date().optional(),
+    remark: z.string().trim().optional().nullable(),
     files: z
       .array(z.instanceof(File, { message: "Each item must be a valid file" }))
       .optional(),
@@ -461,8 +463,18 @@ export const eventTaskConfigSchema = z
 
 export type EventTaskConfig = z.infer<typeof eventTaskConfigSchema>;
 
-//Reassign event task
-export const reAssignSchema = z.object({
+//Base event task action schema
+/** Base (remark + files) reused by many actions */
+export const baseActionSchema = z.object({
+  remark: z.string().trim().optional().nullable(),
+  files: z
+    .array(z.instanceof(File, { message: "Each item must be a valid file" }))
+    .optional(),
+});
+export type BaseActionSchemaType = z.infer<typeof baseActionSchema>;
+
+/** Reassign = base + targetUserId */
+export const reAssignSchema = baseActionSchema.extend({
   targetUserId: z.string().min(1, "Please select a member"),
 });
 export type ReAssignFormType = z.infer<typeof reAssignSchema>;
@@ -516,6 +528,7 @@ export const taskLogSchema = z.object({
   targetUser: taskLogUserSchema.nullable().optional(),
   sourceUser: taskLogUserSchema.nullable().optional(),
   createTime: localDateTimeString,
+  remark: z.string().nullable().optional(),
   fileResults: z.array(fileResultSchema).optional().default([]),
 });
 

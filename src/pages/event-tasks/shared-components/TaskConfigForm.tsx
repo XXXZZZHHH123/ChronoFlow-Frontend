@@ -28,6 +28,7 @@ type InitialValues = {
   description?: string | null;
   startTime?: Date | undefined;
   endTime?: Date | undefined;
+  remark?: string | null;
 };
 
 type TaskConfigUpdateFormProps = {
@@ -55,6 +56,7 @@ export default function TaskConfigUpdateFormModal({
       startTime: initial?.startTime,
       endTime: initial?.endTime,
       files: undefined,
+      remark: initial?.remark ?? null,
     },
   });
 
@@ -74,6 +76,7 @@ export default function TaskConfigUpdateFormModal({
       startTime: initial?.startTime,
       endTime: initial?.endTime,
       files: undefined,
+      remark: initial?.remark ?? "",
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, initial]);
@@ -117,7 +120,7 @@ export default function TaskConfigUpdateFormModal({
       }}
     >
       <DialogTrigger asChild>
-        <Button variant="outline" >{triggerLabel}</Button>
+        <Button variant="outline">{triggerLabel}</Button>
       </DialogTrigger>
 
       <DialogContent className="w-[92vw] sm:max-w-md p-0">
@@ -197,6 +200,20 @@ export default function TaskConfigUpdateFormModal({
                     </>
                   )}
                 />
+              </div>
+
+              {/* Remark */}
+              <div className="grid gap-2">
+                <Label htmlFor="remark">Remark</Label>
+                <Textarea
+                  id="remark"
+                  placeholder="Type any note/remark for this action…"
+                  rows={3}
+                  {...register("remark")}
+                />
+                <p className="h-5 text-sm text-destructive">
+                  {errors.remark?.message ?? "\u00A0"}
+                </p>
               </div>
 
               {/* Files */}

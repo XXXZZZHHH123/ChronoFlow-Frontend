@@ -549,7 +549,6 @@ export function buildTaskCreateFormData(
 
 export function buildTaskConfigFormData(input: EventTaskConfig): FormData {
   const form = new FormData();
-
   // Only append fields if provided (backend treats all as optional)
   if (input.name != null) form.append("name", input.name);
   if (input.description != null) form.append("description", input.description);
@@ -569,6 +568,11 @@ export function buildTaskConfigFormData(input: EventTaskConfig): FormData {
   const end = fmtLocal(input.endTime);
   if (start) form.append("startTime", start);
   if (end) form.append("endTime", end);
+
+  // remark
+  if (input.remark != null) {
+    form.append("remark", String(input.remark));
+  }
 
   // files
   if (input.files?.length) {
@@ -658,3 +662,8 @@ export function formatFileBytes(n: number) {
   }
   return `${n.toFixed(idx === 0 ? 0 : 1)} ${units[idx]}`;
 }
+
+export const actionsThatAllowFiles = new Set<number>([
+  TaskActionEnum.SUBMIT,
+  TaskActionEnum.BLOCK,
+]);

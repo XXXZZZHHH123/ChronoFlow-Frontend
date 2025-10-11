@@ -40,7 +40,6 @@ export async function updateEventTask(
   input: EventTaskConfig
 ) {
   const form = buildTaskConfigFormData(input);
-
   const res = await http.patch(`/system/task/${eventId}/${taskId}`, form, {
     headers: { "Content-Type": "multipart/form-data" },
   });

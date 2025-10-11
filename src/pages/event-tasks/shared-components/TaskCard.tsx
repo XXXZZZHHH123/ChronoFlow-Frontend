@@ -25,14 +25,15 @@ import {
   getStatusUX,
   getActionOptionsForStatus,
   TaskActionEnum,
-  type AllowAction,
+  actionsThatAllowFiles,
 } from "@/services/eventTask";
 import { useEventTasksContext } from "@/contexts/event-tasks/useEventTasksContext";
-import { updateEventTask, deleteEventTask } from "@/api/eventTasksApi";
+import { deleteEventTask } from "@/api/eventTasksApi";
 import { useAuthStore } from "@/stores/authStore";
 import TaskConfigUpdateFormModal from "./TaskConfigForm";
 import TaskReassignModal from "./TaskReassignForm";
 import TaskLogModal from "./TaskLogPanel";
+import TaskActionNoteModal from "./TaskActionNoteModal";
 
 type TaskCardProps = { task: EventTask };
 
@@ -86,28 +87,6 @@ export function TaskCard({ task }: TaskCardProps) {
   );
 
   const canOpenUpdate = Boolean(eventId);
-
-  const runInstantAction = async (type: AllowAction) => {
-    if (!eventId) return;
-    try {
-      await updateEventTask(eventId, task.id, { type });
-      await Swal.fire({
-        icon: "success",
-        title: "Success",
-        text: "Task updated successfully.",
-      });
-      onRefresh();
-    } catch (err: unknown) {
-      await Swal.fire({
-        icon: "error",
-        title: "Action failed",
-        text:
-          err instanceof Error
-            ? err.message
-            : "Operation failed. Please try again.",
-      });
-    }
-  };
 
   const onDelete = async () => {
     if (!eventId) return;
@@ -267,9 +246,7 @@ export function TaskCard({ task }: TaskCardProps) {
           {/* Dynamic actions (buttons) */}
           {isParticipant &&
             (() => {
-              // Which actions we actually render in this card (keeps order)
               const items = actions;
-
               const cols = Math.min(items.length || 1, 3);
 
               return (
@@ -280,15 +257,14 @@ export function TaskCard({ task }: TaskCardProps) {
                   }}
                 >
                   {items.map((a) => {
-                    // UPDATE → open update-only modal (fill cell, equal height)
-                    if (a.value === TaskActionEnum.UPDATE && canOpenUpdate) {
+                    // UPDATE → dedicated modal
+                    if (a.value === TaskActionEnum.UPDATE && eventId) {
                       return (
                         <Tooltip key={a.value}>
                           <TooltipTrigger asChild>
-                            {/* Make the internal DialogTrigger button fill this cell */}
                             <div className="w-full [&>button]:w-full [&>button]:h-10">
                               <TaskConfigUpdateFormModal
-                                eventId={eventId ?? ""}
+                                eventId={eventId}
                                 taskId={task.id}
                                 onRefresh={onRefresh}
                                 initial={{
@@ -300,6 +276,7 @@ export function TaskCard({ task }: TaskCardProps) {
                                   endTime: task.endTime
                                     ? new Date(task.endTime)
                                     : undefined,
+                                  remark: task.remark ?? null,
                                 }}
                                 triggerLabel={a.label}
                               />
@@ -314,26 +291,27 @@ export function TaskCard({ task }: TaskCardProps) {
                       );
                     }
 
-                    // ASSIGN → placeholder for now (still occupies a grid cell)
+                    // ASSIGN → dedicated reassign modal
                     if (a.value === TaskActionEnum.ASSIGN && eventId) {
                       return (
                         <Tooltip key={a.value}>
                           <TooltipTrigger asChild>
-                            {/* Make the internal DialogTrigger button fill this cell */}
                             <div className="w-full [&>button]:w-full [&>button]:h-10">
                               <TaskReassignModal
-                                key={a.value}
-                                eventId={eventId}
+                                eventId={eventId!}
                                 taskId={task.id}
                                 onRefresh={onRefresh}
                                 options={assignableMembers}
-                                initialUserId={task.assignedUser?.id ?? ""}
+                                initial={{
+                                  targetUserId: task.assignedUser?.id ?? "",
+                                  taskName: task.name ?? "",
+                                  remark: task.remark ?? "",
+                                }}
                                 trigger={
                                   <button className="btn w-full sm:w-auto h-10 rounded-md px-4 border">
                                     {a.label}
                                   </button>
                                 }
-                                triggerLabel={a.label}
                               />
                             </div>
                           </TooltipTrigger>
@@ -346,7 +324,7 @@ export function TaskCard({ task }: TaskCardProps) {
                       );
                     }
 
-                    // DELETE → destructive
+                    // DELETE → destructive button
                     if (a.value === TaskActionEnum.DELETE) {
                       return (
                         <Tooltip key={a.value}>
@@ -371,20 +349,24 @@ export function TaskCard({ task }: TaskCardProps) {
                       );
                     }
 
-                    // Instant backend actions (ACCEPT/REJECT/SUBMIT/BLOCK/APPROVE)
+                    // All other actions → generic remark/files modal
+                    const showFiles = actionsThatAllowFiles.has(a.value);
                     return (
                       <Tooltip key={a.value}>
                         <TooltipTrigger asChild>
-                          <Button
-                            className="w-full h-10"
-                            variant="outline"
-                            onClick={() =>
-                              runInstantAction(a.value as AllowAction)
-                            }
-                            disabled={loading}
-                          >
-                            {a.label}
-                          </Button>
+                          <div className="w-full [&>button]:w-full [&>button]:h-10">
+                            <TaskActionNoteModal
+                              eventId={eventId!}
+                              taskId={task.id}
+                              action={a.value}
+                              initialName={task.name ?? ""}
+                              showFiles={showFiles}
+                              triggerLabel={a.label}
+                              onRefresh={onRefresh}
+                              title={a.label}
+                              description={a.description}
+                            />
+                          </div>
                         </TooltipTrigger>
                         <TooltipContent side="top" className="max-w-[260px]">
                           <p className="text-xs whitespace-pre-line">
@@ -398,7 +380,7 @@ export function TaskCard({ task }: TaskCardProps) {
               );
             })()}
 
-          {/* If no eventId, hint why update is disabled (only when update would be allowed) */}
+          {/* If no eventId, hint why update is disabled */}
           {!canOpenUpdate &&
             actions.some((a) => a.value === TaskActionEnum.UPDATE) && (
               <p className="text-[11px] text-muted-foreground">

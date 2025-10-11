@@ -142,6 +142,15 @@ export default function TaskLogModal({
                       </div>
                     </div>
 
+                    {log.remark && (
+                      <div className="mt-3 rounded-md bg-muted/40 px-3 py-2 text-sm border border-muted text-muted-foreground">
+                        <span className="font-medium text-foreground">
+                          Remark:
+                        </span>{" "}
+                        {log.remark}
+                      </div>
+                    )}
+
                     {/* Attachments — horizontal scroll, 2 cards visible */}
                     {log.fileResults && log.fileResults.length > 0 && (
                       <div className="mt-3 overflow-x-auto">
