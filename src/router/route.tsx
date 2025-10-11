@@ -12,11 +12,19 @@ import SpecificEventTasksPage from "@/pages/event-tasks";
 import OrganiserDashboardPage from "@/pages/organiser-dashboard";
 import MemberDashboardPage from "@/pages/member-dashboard";
 import SpecificEventAttendeesPage from "@/pages/event-attendees";
+import SpecificCheckinAttendeesPage from "@/pages/checkin-attendees";
+import StaffScanPage from "@/pages/checkin-attendees/staff-scan";
+import AttendeeScanPage from "@/pages/checkin-attendees/attendee-scan";
 
 const router = createBrowserRouter([
   {
     path: "/login",
     element: <LoginPage />,
+  },
+
+  {
+    path: "/event/attendee/scan",
+    element: <AttendeeScanPage />,
   },
   {
     path: "/",
@@ -45,6 +53,15 @@ const router = createBrowserRouter([
           {
             path: "event/:id/attendees",
             element: <SpecificEventAttendeesPage />,
+          },
+          {
+            path: "event/:id/checkin",
+            element: <SpecificCheckinAttendeesPage />,
+          },
+          // Staff扫码页面（在AppLayout内，有导航栏）
+          {
+            path: "event-attendees/staff-scan",
+            element: <StaffScanPage />,
           },
         ],
       },

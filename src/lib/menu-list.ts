@@ -73,6 +73,7 @@ export function getMenuList(
   const groupPath = `${base}/groups`;
   const taskPath = `${base}/tasks`;
   const attendeePath = `${base}/attendees`;
+  const checkinPath = `${base}/checkin`;
 
   return [
     {
@@ -103,6 +104,13 @@ export function getMenuList(
           active: pathname === attendeePath,
           submenus: [],
           icon: UserRoundPlus,
+        },
+        {
+          href: checkinPath,
+          label: "Check-in",
+          active: pathname === checkinPath,
+          submenus: [],
+          icon: Users,
         },
       ],
     },
