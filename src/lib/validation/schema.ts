@@ -552,6 +552,7 @@ export const attendeeSchema = z.object({
   checkInToken: z.string(),
   qrCodeBase64: z.string().nullable(),
   qrCodeUrl: z.string().nullable(),
+  checkInStatus: z.union([z.literal(0), z.literal(1)]),
 });
 
 export const attendeesResponseSchema = z.array(attendeeSchema);

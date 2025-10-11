@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import Swal from "sweetalert2";
 import { deleteAttendee } from "@/api/attendeeApi";
 import AttendeeConfigFormModal from "../AttendeeConfigForm";
+import { Badge } from "@/components/ui/badge";
 
 type ActionCellProps = {
   attendee: Attendee;
@@ -117,5 +118,35 @@ export const AttendeeColumns = (
         {row.getValue("attendeeMobile")}
       </div>
     ),
+  },
+  {
+    accessorKey: "checkInStatus",
+    header: ({ column }) => (
+      <div className="flex justify-center w-full">
+        <DataTableColumnHeader column={column} title="Check-In Status" />
+      </div>
+    ),
+    cell: ({ row }) => {
+      const isCheckedIn = row.getValue("checkInStatus") === 1;
+      return (
+        <div className="flex justify-center">
+          {isCheckedIn ? (
+            <Badge
+              variant="secondary"
+              className="bg-emerald-100 text-emerald-700 ring-1 ring-emerald-300 font-medium"
+            >
+              Checked In
+            </Badge>
+          ) : (
+            <Badge
+              variant="secondary"
+              className="bg-zinc-100 text-zinc-700 ring-1 ring-zinc-300 font-medium"
+            >
+              Not Checked In
+            </Badge>
+          )}
+        </div>
+      );
+    },
   },
 ];
