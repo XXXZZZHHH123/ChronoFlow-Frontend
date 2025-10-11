@@ -290,7 +290,7 @@ export function getActionOptionsForStatus(
               "Remove this task if it was created by mistake or is no longer needed.",
           },
           {
-            label: "Assign",
+            label: "Reassign",
             value: TaskActionEnum.ASSIGN,
             description:
               "Reassign the task to another member or back to the same assignee after updates.",
@@ -317,7 +317,7 @@ export function getActionOptionsForStatus(
               "Remove this task if it’s no longer required. This action is irreversible.",
           },
           {
-            label: "Assign",
+            label: "Ressign",
             value: TaskActionEnum.ASSIGN,
             description:
               "Reassign the task to another member or back to the same assignee after updates.",
@@ -344,7 +344,7 @@ export function getActionOptionsForStatus(
               "Remove this task if it’s no longer relevant after the delay.",
           },
           {
-            label: "Assign",
+            label: "Reassign",
             value: TaskActionEnum.ASSIGN,
             description:
               "Reassign the task to another member or back to the same assignee after updates.",
@@ -365,7 +365,7 @@ export function getActionOptionsForStatus(
             description: "Remove this task if it’s no longer required.",
           },
           {
-            label: "Assign",
+            label: "Reassign",
             value: TaskActionEnum.ASSIGN,
             description:
               "Reassign the task to another member or back to the same assignee after updates.",
@@ -381,7 +381,7 @@ export function getActionOptionsForStatus(
               "Review and modify task details or clarify requirements before reassignment.",
           },
           {
-            label: "Assign",
+            label: "Reassign",
             value: TaskActionEnum.ASSIGN,
             description:
               "Reassign the task to another member or back to the same assignee after updates.",
