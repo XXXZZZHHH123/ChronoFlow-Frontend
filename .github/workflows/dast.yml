@@ -28,26 +28,27 @@ jobs:
       - name: Wait for frontend
         run: npx wait-on http-get://127.0.0.1:5173
 
-      # Optional: avoid 'Permission denied' when ZAP writes temp files to mounted workspace
+      # Avoid 'Permission denied' when ZAP writes temp files into mounted workspace
       - name: Relax workspace perms for ZAP container
         run: chmod -R a+w .
 
-      # ZAP runs in Docker with --network=host on Linux runners; use 127.0.0.1
+      # Baseline scan (Docker runs with --network=host on Linux -> use 127.0.0.1)
       - name: OWASP ZAP Baseline Scan
         uses: zaproxy/action-baseline@v0.10.0
         with:
           target: "http://127.0.0.1:5173"
-          # If you keep a tuning file in repo, uncomment the next line:
-          # rules_file_name: ".zap/rules.tsv"
+          rules_file_name: ".zap/rules.tsv"          # ← uses your policy
           cmd_options: "-j -m 5"
-          fail_action: false            # <-- Option 1: do not fail CI on WARN
-          allow_issue_writing: false    # avoid GitHub permission errors
+          fail_action: false                         # ← don't fail CI on WARNs for preview
+          allow_issue_writing: false                 # avoid GitHub permission errors
+          artifact_name: "zap-baseline-${{ github.run_id }}"  # ← valid artifact name
 
+      # Optionally also upload the reports we know the action creates
       - name: Upload ZAP report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: zap-baseline-report
+          name: "zap-baseline-report-${{ github.run_id }}"
           path: |
             report_html.html
             report_md.md
