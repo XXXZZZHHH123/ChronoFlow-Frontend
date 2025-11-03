@@ -31,3 +31,5 @@ dist-ssr
 # CI/Tooling reports
 eslint-report.json
 audit.json
+
+coverage

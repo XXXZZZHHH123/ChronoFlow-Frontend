@@ -34,7 +34,7 @@ import {
   getGroupMembers,
   addMembersToGroup,
 } from "@/api/groupApi";
-import { useMembers } from "@/hooks/members/userMember";
+import { useMembers } from "@/hooks/members/useMember";
 import Swal from "sweetalert2";
 import { Textarea } from "@/components/ui/textarea";
 

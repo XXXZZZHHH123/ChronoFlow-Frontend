@@ -6,7 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useMembers } from "@/hooks/members/userMember";
+import { useMembers } from "@/hooks/members/useMember";
 import { useSystemRoles } from "@/hooks/roles/useSystemRoles";
 import { useMemo } from "react";
 import { MemberColumns } from "./components/get-member-table/columns";

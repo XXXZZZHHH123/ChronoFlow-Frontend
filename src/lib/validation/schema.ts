@@ -1,3 +1,8 @@
+import {
+  allowedActions,
+  TaskActionEnum,
+  type AllowAction,
+} from "@/services/eventTask";
 import { z } from "zod";
 
 //Login
@@ -94,6 +99,88 @@ export type Member = z.infer<typeof MemberSchema>;
 
 export const MembersResponseSchema = z.array(MemberSchema);
 export type MembersResponse = z.infer<typeof MembersResponseSchema>;
+
+const MemberDashboardEventSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string().nullable().optional(),
+  organizerId: z.string().nullable().optional(),
+  location: z.string().nullable().optional(),
+  status: z.number().int(),
+  startTime: z.coerce.date(),
+  endTime: z.coerce.date().nullable().optional(),
+  remark: z.string().nullable().optional(),
+});
+export type MemberDashboardEvent = z.infer<typeof MemberDashboardEventSchema>;
+
+const MemberDashboardAssignmentGroupSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  eventId: z.string(),
+  leadUserId: z.string().nullable().optional(),
+  leadUserName: z.string().nullable().optional(),
+  remark: z.string().nullable().optional(),
+});
+export type MemberDashboardAssignmentGroup = z.infer<
+  typeof MemberDashboardAssignmentGroupSchema
+>;
+
+const MemberDashboardAssignedUserSchema = z.object({
+  id: z.string(),
+  name: z.string().nullable().optional(),
+  email: z.string().nullable().optional(),
+  phone: z.string().nullable().optional(),
+  groups: z.array(MemberDashboardAssignmentGroupSchema).optional().default([]),
+});
+export type MemberDashboardAssignedUser = z.infer<
+  typeof MemberDashboardAssignedUserSchema
+>;
+
+const MemberDashboardGroupSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  sort: z.number().int().default(0),
+  leadUserId: z.string().nullable().optional(),
+  leadUserName: z.string().nullable().optional(),
+  remark: z.string().nullable().optional(),
+  status: z.number().int(),
+  event: MemberDashboardEventSchema,
+});
+export type MemberDashboardGroup = z.infer<typeof MemberDashboardGroupSchema>;
+
+const MemberDashboardTaskSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string().nullable().optional(),
+  status: z.number().int(),
+  startTime: z.coerce.date(),
+  endTime: z.coerce.date().nullable().optional(),
+  remark: z.string().nullable().optional(),
+  createTime: z.coerce.date(),
+  updateTime: z.coerce.date(),
+  assignedUser: MemberDashboardAssignedUserSchema.nullable().optional(),
+  event: MemberDashboardEventSchema,
+});
+export type MemberDashboardTask = z.infer<typeof MemberDashboardTaskSchema>;
+
+const MemberDashboardMemberSchema = z.object({
+  id: z.string(),
+  username: z.string(),
+  name: z.string().nullable().optional(),
+  email: z.string().email("Invalid email"),
+  phone: z.string().nullable().optional(),
+  status: z.number().int(),
+  createTime: z.coerce.date(),
+  updateTime: z.coerce.date(),
+});
+export type MemberDashboardMember = z.infer<typeof MemberDashboardMemberSchema>;
+
+export const MemberDashboardSchema = z.object({
+  member: MemberDashboardMemberSchema,
+  groups: z.array(MemberDashboardGroupSchema).default([]),
+  tasks: z.array(MemberDashboardTaskSchema).default([]),
+});
+export type MemberDashboard = z.infer<typeof MemberDashboardSchema>;
 
 export const MemberConfigSchema = z.object({
   email: z.email("Invalid email"),
@@ -272,36 +359,125 @@ export type PermissionConfig = z.infer<typeof permissionConfigSchema>;
 export const eventTaskSchema = z.object({
   id: z.string(),
   name: z.string(),
-  description: z.string().nullable().optional(),
-  status: z.number().int().min(0).max(6),
+  description: z.string().nullable(),
+  status: z.number().int(), // backend currently returns 0..?
   startTime: z.string().nullable(),
   endTime: z.string().nullable(),
-  assignedUser: z
-    .object({
-      id: z.string(),
-      name: z.string(),
-      group: z.object({
-        id: z.string(),
-        name: z.string(),
-      }),
-    })
-    .nullable(),
+  createTime: z.string().nullable(),
+  updateTime: z.string().nullable(),
+  remark: z.string().nullable(),
+  assignerUser: z.object({
+    id: z.string(),
+    name: z.string(),
+    email: z.string().nullable(),
+    phone: z.string().nullable(),
+    groups: z
+      .array(
+        z.object({
+          id: z.string(),
+          name: z.string(),
+        })
+      )
+      .nullable(),
+  }),
+  assignedUser: z.object({
+    id: z.string(),
+    name: z.string(),
+    email: z.string().nullable(),
+    phone: z.string().nullable(),
+    groups: z
+      .array(
+        z.object({
+          id: z.string(),
+          name: z.string(),
+        })
+      )
+      .nullable(),
+  }),
 });
 
 export const eventTaskListSchema = z.array(eventTaskSchema);
 export type EventTask = z.infer<typeof eventTaskSchema>;
 
-export const eventTaskConfigSchema = z.object({
-  id: z.string().optional(),
-  name: z.string().min(1, "Task name is required"),
-  description: z.string().nullable().optional(),
-  status: z.number().int().min(0).max(6),
-  startTime: z.string().nullable().optional(),
-  endTime: z.string().nullable().optional(),
-  assignedUserId: z.string().nullable().optional(),
-});
+// event task create config
+export const eventTaskCreateConfigSchema = z
+  .object({
+    id: z.string().optional(),
+    name: z.string().trim().min(1, "Task name is required"),
+    description: z.string().trim().optional().nullable(),
+    startTime: z.date().optional(),
+    endTime: z.date().optional(),
+    remark: z.string().trim().optional().nullable(),
+    targetUserId: z.string().min(1, "Assigned user is required"),
+    files: z
+      .array(
+        z.instanceof(File, {
+          message: "Each item must be a valid file",
+        })
+      )
+      .optional(),
+  })
+  .superRefine(({ startTime, endTime }, ctx) => {
+    if (startTime && endTime && endTime.getTime() < startTime.getTime()) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["endTime"],
+        message: "End time cannot be earlier than start time",
+      });
+    }
+  });
+
+export type EventTaskCreateConfig = z.infer<typeof eventTaskCreateConfigSchema>;
+
+// General event task update config (for different update actions)
+export const eventTaskConfigSchema = z
+  .object({
+    name: z.string().trim().min(1, "Name is required"),
+    description: z.string().trim().optional().nullable(),
+    type: z
+      .union(
+        allowedActions.map((a) => z.literal(a)) as [
+          z.ZodLiteral<AllowAction>,
+          ...z.ZodLiteral<AllowAction>[]
+        ]
+      )
+      .optional()
+      .describe("Task action type (only valid update actions allowed)"),
+    targetUserId: z.string().optional(),
+    startTime: z.date().optional(),
+    endTime: z.date().optional(),
+    remark: z.string().trim().optional().nullable(),
+    files: z
+      .array(z.instanceof(File, { message: "Each item must be a valid file" }))
+      .optional(),
+  })
+  .superRefine(({ startTime, endTime }, ctx) => {
+    if (startTime && endTime && endTime.getTime() < startTime.getTime()) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["endTime"],
+        message: "End time cannot be earlier than start time",
+      });
+    }
+  });
 
 export type EventTaskConfig = z.infer<typeof eventTaskConfigSchema>;
+
+//Base event task action schema
+/** Base (remark + files) reused by many actions */
+export const baseActionSchema = z.object({
+  remark: z.string().trim().optional().nullable(),
+  files: z
+    .array(z.instanceof(File, { message: "Each item must be a valid file" }))
+    .optional(),
+});
+export type BaseActionSchemaType = z.infer<typeof baseActionSchema>;
+
+/** Reassign = base + targetUserId */
+export const reAssignSchema = baseActionSchema.extend({
+  targetUserId: z.string().min(1, "Please select a member"),
+});
+export type ReAssignFormType = z.infer<typeof reAssignSchema>;
 
 //Assignable members for event tasks
 export const assignableMemberSchema = z.object({
@@ -323,3 +499,87 @@ export type AssignableMember = z.infer<typeof assignableMemberSchema>;
 export type EventGroupWithAssignableMembers = z.infer<
   typeof eventGroupWithAssignableMembersSchema
 >;
+
+//Event task log
+/** Back-end returns LocalDateTime without timezone (e.g. 2025-10-11T02:49:04) */
+const localDateTimeString = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/, "Invalid LocalDateTime");
+
+/** FileResult */
+export const fileResultSchema = z.object({
+  objectName: z.string(),
+  name: z.string().nullable().optional(),
+  contentType: z.string(),
+  size: z.string(),
+  signedUrl: z.string(),
+});
+
+export const taskLogUserSchema = z.object({
+  id: z.string(),
+  name: z.string().nullable().optional(),
+  email: z.email().nullable().optional(),
+});
+
+/** TaskLogResponse */
+export const taskLogSchema = z.object({
+  id: z.string(),
+  action: z.enum(TaskActionEnum),
+  targetUser: taskLogUserSchema.nullable().optional(),
+  sourceUser: taskLogUserSchema.nullable().optional(),
+  createTime: localDateTimeString,
+  remark: z.string().nullable().optional(),
+  fileResults: z.array(fileResultSchema).optional().default([]),
+});
+
+/** Response wrapper*/
+export const taskLogResponseSchema = z.array(taskLogSchema);
+
+export type FileResult = z.infer<typeof fileResultSchema>;
+export type TaskLogUser = z.infer<typeof taskLogUserSchema>;
+export type TaskLog = z.infer<typeof taskLogSchema>;
+export type TaskLogListResponse = z.infer<typeof taskLogResponseSchema>;
+
+//Attendees
+export const attendeeSchema = z.object({
+  id: z.string(),
+  attendeeEmail: z.email("Invalid email"),
+  attendeeName: z.string().trim().min(1, "Name is required"),
+  attendeeMobile: z
+    .string()
+    .trim()
+    .regex(/^(?:\+65|0065)?[89]\d{7}$/, "Invalid Singapore mobile number"),
+  checkInToken: z.string(),
+  qrCodeBase64: z.string().nullable(),
+  qrCodeUrl: z.string().nullable(),
+  checkInStatus: z.union([z.literal(0), z.literal(1)]),
+});
+
+export const attendeesResponseSchema = z.array(attendeeSchema);
+export type Attendee = z.infer<typeof attendeeSchema>;
+
+//Indi attendee config
+export const IndiAttendeeConfigSchema = z.object({
+  email: z
+    .string()
+    .trim()
+    .regex(/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/, "Invalid email address"),
+  name: z.string().trim().min(1, "Name is required"),
+  mobile: z
+    .string()
+    .trim()
+    .regex(/^(?:\+65|0065)?[89]\d{7}$/, "Invalid Singapore mobile number"),
+});
+
+export type IndiAttendeeConfig = z.infer<typeof IndiAttendeeConfigSchema>;
+
+//Attendee config
+export const AttendeeConfigSchema = z.object({
+  eventId: z.string().trim().min(1, "Event ID is required"),
+  attendees: z
+    .array(IndiAttendeeConfigSchema)
+    .min(1, "At least one attendee is required"),
+  qrSize: z.number().int().positive().optional().default(400),
+});
+
+export type AttendeeConfig = z.infer<typeof AttendeeConfigSchema>;

@@ -25,7 +25,7 @@ import {
   addMembersToGroup,
   removeMembersFromGroup,
 } from "@/api/groupApi";
-import { useMembers } from "@/hooks/members/userMember";
+import { useMembers } from "@/hooks/members/useMember";
 import Swal from "sweetalert2";
 
 type Props = {

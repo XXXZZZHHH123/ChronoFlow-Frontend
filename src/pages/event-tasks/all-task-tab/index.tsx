@@ -3,20 +3,19 @@ import { TasksKanban } from "../shared-components/TasksKaben";
 import { useEventTasksContext } from "@/contexts/event-tasks/useEventTasksContext";
 
 export function AllTasksTab() {
-  const { tasks, loading, error } = useEventTasksContext();
+  const { allTasks, loading, error } = useEventTasksContext();
+
+  const renderContent = () => {
+    if (loading)
+      return <p className="text-sm text-muted-foreground">Loading tasks…</p>;
+    if (error) return <p className="text-sm text-red-500">{error}</p>;
+    return <TasksKanban tasks={allTasks} />;
+  };
 
   return (
     <Card className="rounded-lg border-none">
       <CardContent className="p-4 sm:p-6 space-y-3">
-        {loading ? (
-          <p className="text-sm text-muted-foreground">Loading tasks…</p>
-        ) : error ? (
-          <p className="text-sm text-red-500">{error}</p>
-        ) : tasks.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No tasks available.</p>
-        ) : (
-          <TasksKanban tasks={tasks} />
-        )}
+        {renderContent()}
       </CardContent>
     </Card>
   );

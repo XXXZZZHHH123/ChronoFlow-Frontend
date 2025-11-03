@@ -57,7 +57,7 @@ export function LoginCard({ onRegistrationSelection }: LoginCardProps) {
 
       if (remember) localStorage.setItem("cf.remember", "1");
       else localStorage.removeItem("cf.remember");
-      navigate("/");
+      navigate("/events");
     } catch (err: unknown) {
       const msg =
         err instanceof Error
