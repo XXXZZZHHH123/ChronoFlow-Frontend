@@ -7,7 +7,7 @@ on:
 
 permissions:
   contents: read
-  security-events: write   # needed for SARIF upload
+  security-events: write
 
 jobs:
   semgrep:
@@ -27,8 +27,8 @@ jobs:
           python -m pip install semgrep
           sudo apt-get update && sudo apt-get install -y jq
 
-      # Same rule packs and include patterns you validated locally
-      - name: Run Semgrep (JSON + SARIF)
+      # 1) JSON run (for stats + artifact)
+      - name: Semgrep JSON
         run: |
           semgrep scan \
             --config p/owasp-top-ten \
@@ -38,8 +38,21 @@ jobs:
             --config p/secrets \
             --include 'src/**/*.ts' --include 'src/**/*.tsx' \
             --metrics=off \
-            --json -o semgrep.json \
-            --sarif -o semgrep.sarif \
+            --json --output semgrep.json \
+            .
+
+      # 2) SARIF run (for Security tab)
+      - name: Semgrep SARIF
+        run: |
+          semgrep scan \
+            --config p/owasp-top-ten \
+            --config p/javascript \
+            --config p/typescript \
+            --config p/react \
+            --config p/secrets \
+            --include 'src/**/*.ts' --include 'src/**/*.tsx' \
+            --metrics=off \
+            --sarif --output semgrep.sarif \
             .
 
       - name: Upload SARIF to GitHub Security tab
@@ -51,9 +64,9 @@ jobs:
         run: |
           echo "## Semgrep Summary" >> $GITHUB_STEP_SUMMARY
           TOTAL=$(jq '.results | length' semgrep.json)
+          FILES=$(jq '.paths.scanned | length' semgrep.json 2>/dev/null || echo 0)
           echo "- **Findings:** $TOTAL" >> $GITHUB_STEP_SUMMARY
-          echo "- **Rules run:** $(jq '.metadata.rules // 0' semgrep.json 2>/dev/null || echo 0)" >> $GITHUB_STEP_SUMMARY
-          echo "- **Files scanned:** $(jq '.paths.scanned | length' semgrep.json 2>/dev/null || echo 0)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Files scanned:** $FILES" >> $GITHUB_STEP_SUMMARY
 
       - name: Upload raw artifacts
         if: always()
