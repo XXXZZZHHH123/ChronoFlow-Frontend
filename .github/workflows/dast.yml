@@ -1,0 +1,61 @@
+name: DAST (OWASP ZAP Baseline)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["test", "dev"]
+  pull_request:
+    branches: ["test", "dev"]
+
+jobs:
+  zap-baseline:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Build & serve the frontend
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Start preview server (5173)
+        run: |
+          npx vite preview --host 127.0.0.1 --port 5173 --strictPort &
+          echo $! > web_pid
+      - name: Wait for frontend
+        run: npx wait-on http-get://127.0.0.1:5173
+
+      # Provide a default ZAP rules file (if you don't keep one in repo)
+      - name: Ensure ZAP rules file
+        run: |
+          mkdir -p .zap
+          cat > .zap/rules.tsv <<'TSV'
+          # id<TAB>action<TAB>comment
+          10038	WARN	CSP header not set (preview server)
+          10054	WARN	X-Content-Type-Options header missing
+          10021	WARN	X-Frame-Options header missing
+          #90033	IGNORE	Loosely Scoped Cookie (if no cookies)
+          TSV
+
+      # ZAP runs in Docker; use host.docker.internal to reach runner's localhost
+      - name: OWASP ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.10.0
+        with:
+          target: "http://host.docker.internal:5173"
+          rules_file_name: ".zap/rules.tsv"
+          cmd_options: "-j -m 5 -r zap-baseline.html"
+          fail_action: true
+
+      - name: Upload ZAP report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-baseline-report
+          path: zap-baseline.html
+
+      - name: Stop preview
+        if: always()
+        run: kill $(cat web_pid) || true

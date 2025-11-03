@@ -1,0 +1,5 @@
+# id<TAB>action<TAB>comment
+10038	WARN	CSP header not set (vite preview isn’t prod)
+10054	WARN	X-Content-Type-Options header missing
+10021	WARN	X-Frame-Options header missing
+#90033	IGNORE	Loosely Scoped Cookie (if you don’t set cookies)
