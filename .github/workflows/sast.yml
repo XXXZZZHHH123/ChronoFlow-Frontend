@@ -1,35 +1,65 @@
-name: "sast"
+name: SAST (Semgrep)
 
 on:
-  push:
-    branches: [test, dev]
-  pull_request:
-    branches: [test, dev]
+  push:         { branches: [test, dev] }
+  pull_request: { branches: [test, dev] }
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write   # needed for SARIF upload
 
 jobs:
-  sast:
+  semgrep:
     name: Static Application Security Testing (Semgrep)
     runs-on: ubuntu-latest
-    permissions:
-      security-events: write
-      contents: read
 
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
-      - name: Install Semgrep
-        run: pipx install semgrep
-
-      - name: Run Semgrep
+      - name: Install Semgrep & jq
         run: |
-          semgrep --version
-          semgrep --config p/typescript --sarif --output semgrep.sarif
+          python -m pip install --upgrade pip
+          python -m pip install semgrep
+          sudo apt-get update && sudo apt-get install -y jq
+
+      # Same rule packs and include patterns you validated locally
+      - name: Run Semgrep (JSON + SARIF)
+        run: |
+          semgrep scan \
+            --config p/owasp-top-ten \
+            --config p/javascript \
+            --config p/typescript \
+            --config p/react \
+            --config p/secrets \
+            --include 'src/**/*.ts' --include 'src/**/*.tsx' \
+            --metrics=off \
+            --json -o semgrep.json \
+            --sarif -o semgrep.sarif \
+            .
 
       - name: Upload SARIF to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: semgrep.sarif
+
+      - name: Job summary
+        run: |
+          echo "## Semgrep Summary" >> $GITHUB_STEP_SUMMARY
+          TOTAL=$(jq '.results | length' semgrep.json)
+          echo "- **Findings:** $TOTAL" >> $GITHUB_STEP_SUMMARY
+          echo "- **Rules run:** $(jq '.metadata.rules // 0' semgrep.json 2>/dev/null || echo 0)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Files scanned:** $(jq '.paths.scanned | length' semgrep.json 2>/dev/null || echo 0)" >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload raw artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: semgrep-results-${{ github.run_id }}
+          path: |
+            semgrep.json
+            semgrep.sarif
