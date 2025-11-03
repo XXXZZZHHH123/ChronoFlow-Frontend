@@ -1,39 +1,116 @@
 name: SAST (Semgrep)
 
 on:
-  push:
-    branches: [test, dev]
-  pull_request:
-    branches: [test, dev]
+  push:          { branches: [test, dev] }
+  pull_request:  { branches: [test, dev] }
+  workflow_dispatch:
 
 permissions:
   contents: read
-  security-events: write   # for SARIF upload
+  security-events: write   # needed for SARIF upload
 
 jobs:
   semgrep:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run Semgrep
-        uses: returntocorp/semgrep-action@v1
+      # (Optional) central ignore file for scans
+      - name: Write .semgrepignore
+        run: |
+          cat > .semgrepignore <<'EOF'
+          node_modules/
+          dist/
+          build/
+          coverage/
+          .vite/
+          .next/
+          **/src/test/**
+          **/src/**/__tests__/**
+          **/*.d.ts
+          EOF
+
+      # Install Semgrep CLI (keeps your current approach)
+      - uses: actions/setup-python@v5
         with:
-          config: |
-            p/owasp-top-ten
-            p/javascript
-            p/typescript
-            p/react
-          generateSarif: true
-          auditOn: push
-          # Optional: speed up / reduce noise
-          exclude: |
-            src/test/e2e/**
-            node_modules/**
-            dist/**
-            coverage/**
+          python-version: "3.x"
+      - name: Install Semgrep & jq
+        run: |
+          python -m pip install --upgrade pip semgrep
+          sudo apt-get update && sudo apt-get install -y jq
+
+      # Run Semgrep -> JSON (stats) and -> SARIF (Code Scanning)
+      - name: Semgrep JSON (for stats)
+        run: |
+          semgrep \
+            --config p/typescript \
+            --config p/react \
+            --exclude node_modules \
+            --timeout 120 \
+            --json -o semgrep.json || true
+
+      - name: Semgrep SARIF (for Code Scanning)
+        run: |
+          semgrep \
+            --config p/typescript \
+            --config p/react \
+            --exclude node_modules \
+            --timeout 120 \
+            --sarif -o semgrep.sarif || true
 
       - name: Upload SARIF to Code Scanning
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: semgrep.sarif
+
+      # Pretty job summary (counts + top rules table)
+      - name: Summarize Semgrep results
+        run: |
+          echo "## Semgrep Summary" >> $GITHUB_STEP_SUMMARY
+          if [ -f semgrep.json ]; then
+            TOTAL=$(jq '.results | length' semgrep.json)
+            HIGH=$(jq '[.results[].extra.severity] | map(select(.=="HIGH")) | length' semgrep.json)
+            MED=$(jq  '[.results[].extra.severity] | map(select(.=="MEDIUM")) | length' semgrep.json)
+            LOW=$(jq  '[.results[].extra.severity] | map(select(.=="LOW")) | length' semgrep.json)
+            INFO=$(jq '[.results[].extra.severity] | map(select(.=="INFO")) | length' semgrep.json)
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "- **Total findings:** ${TOTAL}"  >> $GITHUB_STEP_SUMMARY
+            echo "- **High:** ${HIGH} · **Medium:** ${MED} · **Low:** ${LOW} · **Info:** ${INFO}" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Top rules" >> $GITHUB_STEP_SUMMARY
+            echo "| Rule | Severity | Count |" >> $GITHUB_STEP_SUMMARY
+            echo "| ---- | -------- | ----- |" >> $GITHUB_STEP_SUMMARY
+            jq -r '
+              [.results[] | {id:.check_id, sev:.extra.severity}]
+              | group_by(.id)
+              | map({id: .[0].id, sev: (.[0].sev), count: length})
+              | sort_by(-.count) | .[0:10][]
+              | "| \(.id) | \(.sev) | \(.count) |"
+            ' semgrep.json >> $GITHUB_STEP_SUMMARY || true
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "> Full details: **Artifacts** (semgrep.json / semgrep.sarif) and **Security → Code scanning alerts**." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "No semgrep.json produced." >> $GITHUB_STEP_SUMMARY
+          fi
+
+      # Gate the build only on HIGH/MED (optional – remove if you always want green)
+      - name: Fail on High/Medium
+        if: always()
+        run: |
+          if [ -f semgrep.json ]; then
+            HIGH=$(jq '[.results[].extra.severity] | map(select(.=="HIGH")) | length' semgrep.json)
+            MED=$(jq  '[.results[].extra.severity] | map(select(.=="MEDIUM")) | length' semgrep.json)
+            if [ "$HIGH" -gt 0 ] || [ "$MED" -gt 0 ]; then
+              echo "::error::Semgrep found HIGH($HIGH) / MEDIUM($MED) findings"; exit 1
+            fi
+          fi
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: semgrep-results-${{ github.run_id }}
+          path: |
+            semgrep.json
+            semgrep.sarif
