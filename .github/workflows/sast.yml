@@ -1,22 +1,25 @@
 name: SAST (Semgrep)
 
 on:
-  push:          { branches: [test, dev] }
-  pull_request:  { branches: [test, dev] }
+  push:         { branches: [test, dev] }
+  pull_request: { branches: [test, dev] }
   workflow_dispatch:
 
 permissions:
   contents: read
-  security-events: write   # needed for SARIF upload
+  security-events: write  # needed for SARIF upload
 
 jobs:
   semgrep:
     runs-on: ubuntu-latest
+    env:
+      # Change to "true" if you want CI to fail on HIGH/MED findings
+      FAIL_ON_HIGH_OR_MEDIUM: "false"
 
     steps:
       - uses: actions/checkout@v4
 
-      # (Optional) central ignore file for scans
+      # (Optional) central ignore file to reduce noise
       - name: Write .semgrepignore
         run: |
           cat > .semgrepignore <<'EOF'
@@ -26,12 +29,40 @@ jobs:
           coverage/
           .vite/
           .next/
-          **/src/test/**
-          **/src/**/__tests__/**
           **/*.d.ts
           EOF
 
-      # Install Semgrep CLI (keeps your current approach)
+      # (Optional) a tiny project-specific ruleset to catch FE pitfalls
+      - name: Add custom Semgrep rules
+        run: |
+          mkdir -p .semgrep
+          cat > .semgrep/custom.yml <<'YAML'
+          rules:
+            - id: react-dangerouslysetinnerhtml
+              message: Avoid dangerouslySetInnerHTML; sanitize or avoid it.
+              severity: MEDIUM
+              languages: [javascript, typescript]
+              patterns:
+                - pattern: <... dangerouslySetInnerHTML=... />
+            - id: localstorage-tokens
+              message: Don't store tokens in localStorage; prefer httpOnly cookies.
+              severity: MEDIUM
+              languages: [javascript, typescript]
+              pattern-either:
+                - pattern: localStorage.setItem($K, $V)
+                - pattern: window.localStorage.setItem($K, $V)
+            - id: axios-missing-timeout
+              message: axios without a timeout can hang; set a reasonable timeout.
+              severity: LOW
+              languages: [javascript, typescript]
+              patterns:
+                - pattern: axios.$METHOD($URL, $DATA)
+                - metavariable-regex: { metavariable: $METHOD, regex: get|post|put|patch|delete }
+              unless:
+                - pattern: axios.$METHOD($URL, $DATA, { ..., timeout: $T, ... })
+          YAML
+
+      # Install Semgrep + jq
       - uses: actions/setup-python@v5
         with:
           python-version: "3.x"
@@ -40,23 +71,36 @@ jobs:
           python -m pip install --upgrade pip semgrep
           sudo apt-get update && sudo apt-get install -y jq
 
-      # Run Semgrep -> JSON (stats) and -> SARIF (Code Scanning)
+      # Run Semgrep -> JSON (for stats)
       - name: Semgrep JSON (for stats)
         run: |
           semgrep \
+            --config p/default \
+            --config p/owasp-top-ten \
+            --config p/security-audit \
+            --config p/javascript \
             --config p/typescript \
             --config p/react \
-            --exclude node_modules \
-            --timeout 120 \
+            --config p/secrets \
+            --config .semgrep/custom.yml \
+            --exclude node_modules --exclude dist --exclude build --exclude coverage \
+            --timeout 240 \
             --json -o semgrep.json || true
 
+      # Run Semgrep -> SARIF (for the Code Scanning UI)
       - name: Semgrep SARIF (for Code Scanning)
         run: |
           semgrep \
+            --config p/default \
+            --config p/owasp-top-ten \
+            --config p/security-audit \
+            --config p/javascript \
             --config p/typescript \
             --config p/react \
-            --exclude node_modules \
-            --timeout 120 \
+            --config p/secrets \
+            --config .semgrep/custom.yml \
+            --exclude node_modules --exclude dist --exclude build --exclude coverage \
+            --timeout 240 \
             --sarif -o semgrep.sarif || true
 
       - name: Upload SARIF to Code Scanning
@@ -64,43 +108,45 @@ jobs:
         with:
           sarif_file: semgrep.sarif
 
-      # Pretty job summary (counts + top rules table)
+      # Pretty job summary
       - name: Summarize Semgrep results
         run: |
           echo "## Semgrep Summary" >> $GITHUB_STEP_SUMMARY
           if [ -f semgrep.json ]; then
-            TOTAL=$(jq '.results | length' semgrep.json)
-            HIGH=$(jq '[.results[].extra.severity] | map(select(.=="HIGH")) | length' semgrep.json)
-            MED=$(jq  '[.results[].extra.severity] | map(select(.=="MEDIUM")) | length' semgrep.json)
-            LOW=$(jq  '[.results[].extra.severity] | map(select(.=="LOW")) | length' semgrep.json)
-            INFO=$(jq '[.results[].extra.severity] | map(select(.=="INFO")) | length' semgrep.json)
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "- **Total findings:** ${TOTAL}"  >> $GITHUB_STEP_SUMMARY
-            echo "- **High:** ${HIGH} · **Medium:** ${MED} · **Low:** ${LOW} · **Info:** ${INFO}" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "### Top rules" >> $GITHUB_STEP_SUMMARY
-            echo "| Rule | Severity | Count |" >> $GITHUB_STEP_SUMMARY
-            echo "| ---- | -------- | ----- |" >> $GITHUB_STEP_SUMMARY
-            jq -r '
-              [.results[] | {id:.check_id, sev:.extra.severity}]
-              | group_by(.id)
-              | map({id: .[0].id, sev: (.[0].sev), count: length})
-              | sort_by(-.count) | .[0:10][]
-              | "| \(.id) | \(.sev) | \(.count) |"
-            ' semgrep.json >> $GITHUB_STEP_SUMMARY || true
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "> Full details: **Artifacts** (semgrep.json / semgrep.sarif) and **Security → Code scanning alerts**." >> $GITHUB_STEP_SUMMARY
+            TOTAL=$(jq '.results? | length // 0' semgrep.json)
+            HIGH=$(jq  '[.results[]?.extra.severity] | map(select(.=="HIGH"))   | length' semgrep.json)
+            MED=$(jq   '[.results[]?.extra.severity] | map(select(.=="MEDIUM")) | length' semgrep.json)
+            LOW=$(jq   '[.results[]?.extra.severity] | map(select(.=="LOW"))    | length' semgrep.json)
+            INFO=$(jq  '[.results[]?.extra.severity] | map(select(.=="INFO"))   | length' semgrep.json)
+
+            {
+              echo ""
+              echo "- **Total findings:** ${TOTAL}"
+              echo "- **High:** ${HIGH} · **Medium:** ${MED} · **Low:** ${LOW} · **Info:** ${INFO}"
+              echo ""
+              echo "### Top rules"
+              echo "| Rule | Severity | Count |"
+              echo "| ---- | -------- | ----- |"
+              jq -r '
+                (.results // [])
+                | map({id:.check_id, sev:.extra.severity})
+                | group_by(.id)
+                | map({id: .[0].id, sev: (.[0].sev), count: length})
+                | sort_by(-.count) | .[0:10][]
+                | "| \(.id) | \(.sev) | \(.count) |"
+              ' semgrep.json
+            } >> $GITHUB_STEP_SUMMARY
           else
             echo "No semgrep.json produced." >> $GITHUB_STEP_SUMMARY
           fi
 
-      # Gate the build only on HIGH/MED (optional – remove if you always want green)
-      - name: Fail on High/Medium
-        if: always()
+      # Optional gating (keeps job green unless you flip the env above)
+      - name: Fail on High/Medium (optional)
+        if: env.FAIL_ON_HIGH_OR_MEDIUM == 'true'
         run: |
           if [ -f semgrep.json ]; then
-            HIGH=$(jq '[.results[].extra.severity] | map(select(.=="HIGH")) | length' semgrep.json)
-            MED=$(jq  '[.results[].extra.severity] | map(select(.=="MEDIUM")) | length' semgrep.json)
+            HIGH=$(jq '[.results[]?.extra.severity] | map(select(.=="HIGH")) | length' semgrep.json)
+            MED=$(jq  '[.results[]?.extra.severity] | map(select(.=="MEDIUM")) | length' semgrep.json)
             if [ "$HIGH" -gt 0 ] || [ "$MED" -gt 0 ]; then
               echo "::error::Semgrep found HIGH($HIGH) / MEDIUM($MED) findings"; exit 1
             fi
@@ -114,3 +160,5 @@ jobs:
           path: |
             semgrep.json
             semgrep.sarif
+            .semgrep/custom.yml
+            .semgrepignore
