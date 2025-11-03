@@ -1,5 +1,5 @@
 import axios, { AxiosError, type AxiosRequestConfig } from "axios";
-import { useAuthStore } from "@/stores/auth-store";
+import { useAuthStore } from "@/stores/authStore";
 import { refresh } from "@/api/authApi";
 
 type RetriableConfig = AxiosRequestConfig & { _retry?: boolean };

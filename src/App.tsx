@@ -2,7 +2,10 @@ import { RouterProvider } from "react-router-dom";
 import router from "./router/route";
 import { useEffect, useState } from "react";
 import { refresh } from "./api/authApi";
-import { useSessionKeepAlive } from "@/hooks/use-session-keep-alive";
+import { useSessionKeepAlive } from "@/hooks/system/useSessionKeepAlive";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "./lib/query-client";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 function AuthBootstrap({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
@@ -28,8 +31,11 @@ export default function App() {
   useSessionKeepAlive({ intervalMs: 10 * 60 * 1000, runOnInit: true });
 
   return (
-    <AuthBootstrap>
-      <RouterProvider router={router} />
-    </AuthBootstrap>
+    <QueryClientProvider client={queryClient}>
+      <AuthBootstrap>
+        <RouterProvider router={router} />
+      </AuthBootstrap>
+      <ReactQueryDevtools initialIsOpen={false} />
+    </QueryClientProvider>
   );
 }

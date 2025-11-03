@@ -82,8 +82,12 @@ export function MemberRegistrationCard({
       });
       reset();
       onBack();
-    } catch (err: any) {
-      const msg = err?.message ?? "Registration failed. Please try again.";
+    } catch (err: unknown) {
+      const msg =
+        err instanceof Error
+          ? err.message
+          : "Registration failed. Please try again.";
+
       await Swal.fire({
         icon: "error",
         title: "Registration failed",
@@ -119,8 +123,11 @@ export function MemberRegistrationCard({
         >
           {/* Read-only invite info */}
           <div className="flex flex-col">
-            <Label className="mb-2">Organization Name</Label>
+            <Label className="mb-2" htmlFor="org_name_ro">
+              Organization Name
+            </Label>
             <Input
+              id="org_name_ro"
               value={prefill.organization_name}
               readOnly
               className="h-10 cursor-default bg-muted"
@@ -128,8 +135,11 @@ export function MemberRegistrationCard({
           </div>
 
           <div className="flex flex-col">
-            <Label className="mb-2">Email</Label>
+            <Label className="mb-2" htmlFor="email_ro">
+              Email
+            </Label>
             <Input
+              id="email_ro"
               value={prefill.email}
               readOnly
               className="h-10 cursor-default bg-muted"

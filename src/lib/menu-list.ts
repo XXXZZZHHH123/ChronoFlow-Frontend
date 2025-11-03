@@ -1,7 +1,11 @@
-import { CalendarDays, type LucideIcon, UserLock, Users } from "lucide-react";
-import { useAuthStore } from "@/stores/auth-store";
-import { useEventStore } from "@/stores/event-store";
-import { hasAnyRole, normalizeRoles, type Role } from "./shared/role";
+import {
+  CalendarDays,
+  Users,
+  ListChecks,
+  Building2,
+  UserRoundPlus,
+  type LucideIcon,
+} from "lucide-react";
 
 export type Submenu = { href: string; label: string; active: boolean };
 export type Menu = {
@@ -13,120 +17,102 @@ export type Menu = {
 };
 export type Group = { groupLabel: string; menus: Menu[] };
 
-export function getMenuList(pathname: string): Group[] {
-  const { user } = useAuthStore();
-  const { selected_event_id } = useEventStore();
+export function getMenuList(
+  pathname: string,
+  opts: { hasUser: boolean }
+): Group[] {
+  const { hasUser } = opts;
+  if (!hasUser) return [];
 
-  if (!user) {
-    return [];
-  }
+  const selectedEventId = pathname.match(/^\/event\/([^/]+)/)?.[1] ?? null;
 
-  const roles: Role[] = normalizeRoles(user.role ?? []);
-
-  if (roles.length === 0) return [];
-
-  const isOrganizer = hasAnyRole(roles, "ORGANIZER");
-  const isManager = hasAnyRole(roles, "MANAGER");
-  const isStaff = hasAnyRole(roles, "STAFF");
-  const isEventSelected = selected_event_id !== null;
-
-  if (isOrganizer && !isEventSelected) {
+  if (!selectedEventId) {
     return [
       {
-        groupLabel: "Event Administration",
+        groupLabel: "Dashboard",
         menus: [
           {
-            href: "/events",
-            label: "Event",
-            active: pathname === "/events",
+            href: "/member-dashboard",
+            label: "Member",
+            active: pathname === "/member-dashboard",
+            submenus: [],
+            icon: CalendarDays,
+          },
+          {
+            href: "/organiser-dashboard",
+            label: "Organiser",
+            active: pathname === "/organiser-dashboard",
             submenus: [],
             icon: CalendarDays,
           },
         ],
       },
       {
-        groupLabel: "Member Administration",
-        menus: [
-          {
-            href: "/members",
-            label: "Member",
-            active: pathname === "/members",
-            submenus: [],
-            icon: Users,
-          },
-          {
-            href: "/roles",
-            label: "Role",
-            active: pathname === "/roles",
-            submenus: [],
-            icon: UserLock,
-          },
-        ],
-      },
-    ];
-  }
-
-  if ((isManager || isStaff) && !isEventSelected) {
-    return [
-      {
-        groupLabel: "Event Administration",
+        groupLabel: "Administration",
         menus: [
           {
             href: "/events",
-            label: "Event",
+            label: "Events",
             active: pathname === "/events",
             submenus: [],
             icon: CalendarDays,
           },
-        ],
-      },
-      {
-        groupLabel: "Member Administration",
-        menus: [
           {
-            href: "/members",
-            label: "Member",
-            active: pathname === "/members",
+            href: "/organisation",
+            label: "Organisation",
+            active: pathname === "/organisation",
             submenus: [],
-            icon: Users,
+            icon: Building2,
           },
         ],
       },
     ];
   }
 
-  if (isOrganizer && isEventSelected) {
-    return [
-      {
-        groupLabel: "Member Administration",
-        menus: [
-          {
-            href: "/event/members",
-            label: "Member",
-            active: pathname === "/event/members",
-            submenus: [],
-            icon: Users,
-          },
-        ],
-      },
-      {
-        groupLabel: "Group Administration",
-        menus: [
-          {
-            href: "/event/groups",
-            label: "Group",
-            active: pathname === "/event/groups",
-            submenus: [],
-            icon: Users,
-          },
-        ],
-      },
-    ];
-  }
+  const base = `/event/${selectedEventId}`;
+  const groupPath = `${base}/groups`;
+  const taskPath = `${base}/tasks`;
+  const attendeePath = `${base}/attendees`;
+  const checkinPath = `${base}/checkin`;
 
-  if (isStaff && isEventSelected) {
-    return [];
-  }
-
-  return [];
+  return [
+    {
+      groupLabel: "Event Management",
+      menus: [
+        {
+          href: groupPath,
+          label: "Groups",
+          active: pathname === groupPath,
+          submenus: [],
+          icon: Users,
+        },
+        {
+          href: taskPath,
+          label: "Tasks",
+          active: pathname === taskPath,
+          submenus: [],
+          icon: ListChecks,
+        },
+      ],
+    },
+    {
+      groupLabel: "Attendee Management",
+      menus: [
+        {
+          href: attendeePath,
+          label: "Attendees",
+          active: pathname === attendeePath,
+          submenus: [],
+          icon: UserRoundPlus,
+        },
+        {
+          href: checkinPath,
+          label: "Check-in",
+          active: pathname === checkinPath,
+          submenus: [],
+          icon: Users,
+        },
+      ],
+    },
+  ];
 }

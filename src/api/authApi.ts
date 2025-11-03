@@ -1,9 +1,8 @@
-import { useAuthStore } from "@/stores/auth-store";
+import { useAuthStore } from "@/stores/authStore";
 import { http } from "@/lib/http";
 import type { User, AuthCredentials } from "@/lib/auth-type";
 import type { LoginUser } from "@/lib/validation/schema";
 import { unwrap } from "@/lib/utils";
-
 
 let refreshing: Promise<boolean> | null = null;
 
@@ -15,13 +14,12 @@ function setAuthFromServer(payload: AuthCredentials) {
   s.setAuth(credentials);
 }
 
-export async function login(credentials: LoginUser) {
+export async function login(credentials: LoginUser): Promise<AuthCredentials> {
   const res = await http.post("/system/auth/login", credentials);
-  const data = unwrap(res.data) as any;
+  const data = unwrap<AuthCredentials>(res.data);
   if (data.user) {
     setAuthFromServer({ user: data.user });
   }
-
   return data;
 }
 

@@ -5,7 +5,7 @@ import { LoginCard } from "./components/LoginCard";
 import { OrganizerRegistrationCard } from "./components/OrganizerRegistrationCard";
 import { RegistrationSelectionCard } from "./components/RegistrationSelectionCard";
 import { MemberRegistrationCard } from "./components/MemberRegistrationCard";
-import { useMemberInvite } from "./hooks/useMemberInvite";
+import { useMemberInvite } from "../../hooks/login/useMemberInvite";
 import { MemberLookupCard } from "./components/MemberLookUpCard";
 import Swal from "sweetalert2";
 

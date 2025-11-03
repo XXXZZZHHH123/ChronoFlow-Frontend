@@ -1,5 +1,5 @@
 import { http } from "@/lib/http";
-import type { MemberBulkUpsertResult } from "@/lib/shared/member";
+import type { MemberBulkUpsertResult } from "@/services/member";
 import { unwrap } from "@/lib/utils";
 import {
   type Member,
@@ -19,38 +19,28 @@ export async function uploadMembersExcel(
   const form = new FormData();
   form.append("file", file, file.name);
 
-  try {
-    const res = await http.post("/organizer/users/bulk-upsert", form, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
-    return unwrap<MemberBulkUpsertResult>(res.data);
-  } catch (err: any) {
-    throw err;
-  }
+  const res = await http.post("/organizer/users/bulk-upsert", form, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return unwrap<MemberBulkUpsertResult>(res.data);
 }
 
+const toPayload = (input: MemberConfig) => ({
+  email: input.email,
+  roleIds: input.roleIds,
+  ...(input.remark ? { remark: input.remark } : {}),
+});
 
 export async function createMember(input: MemberConfig) {
-  const payload = {
-    email: input.email,
-    roleIds: input.roleIds,
-    ...(input.remark ? { remark: input.remark } : {}),
-  };
-
-  const res = await http.post("/organizer/create/user", payload);
+  const res = await http.post("/organizer/create/user", toPayload(input));
   return unwrap(res.data);
 }
 
 export async function updateMember(id: string, input: MemberConfig) {
-  const payload = {
-    email: input.email,
-    roleIds: input.roleIds,
-    ...(input.remark ? { remark: input.remark } : {}),
-  };
-
-  const res = await http.patch(`/organizer/update/user/${id}`, payload);
+  const res = await http.patch(
+    `/organizer/update/user/${id}`,
+    toPayload(input)
+  );
   return unwrap(res.data);
 }
 

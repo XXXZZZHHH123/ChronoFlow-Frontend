@@ -57,7 +57,8 @@ export function DataTableFacetedFilter<TData, TValue>({
         column?.setFilterValue(filterValues.length ? filterValues : undefined);
       }
     }
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // intentionally only-once
 
   return (
     <Popover>

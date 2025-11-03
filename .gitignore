@@ -27,3 +27,9 @@ dist-ssr
 .env
 .env.development
 .env.production
+
+# CI/Tooling reports
+eslint-report.json
+audit.json
+
+coverage

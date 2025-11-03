@@ -13,6 +13,8 @@ import {
 import { CollapseMenuButton } from "./collapse-menu-button";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/stores/authStore";
+import { useMemo } from "react";
 
 interface MenuProps {
   isOpen: boolean | undefined;
@@ -20,10 +22,13 @@ interface MenuProps {
 
 export function Menu({ isOpen }: MenuProps) {
   const { pathname } = useLocation();
-
-  const menuList = getMenuList(pathname);
-
   const navigate = useNavigate();
+  const user = useAuthStore((s) => s.user);
+
+  const menuList = useMemo(
+    () => getMenuList(pathname, { hasUser: !!user }),
+    [pathname, user]
+  );
 
   async function handleLogoutClick() {
     await logout();

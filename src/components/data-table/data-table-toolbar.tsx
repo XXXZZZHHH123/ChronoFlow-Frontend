@@ -57,14 +57,9 @@ export function DataTableToolbar<TData>({
             ) : (
               <input
                 placeholder={
-                  searchColumn
-                    .map(
-                      (col) =>
-                        table.getColumn(col)?.getFilterValue() as
-                          | string
-                          | undefined
-                    )
-                    .find((v) => v !== undefined) ?? "Filter ..."
+                  searchColumn.length === 1
+                    ? `Filter by ${searchColumn[0]}...`
+                    : `Filter by ${searchColumn.join(", ")}...`
                 }
                 onChange={(event) => {
                   const filterValue = event.target.value;

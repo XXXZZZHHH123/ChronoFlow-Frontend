@@ -34,7 +34,11 @@ export function MemberLookupCard({ onBack, onSearch }: MemberLookupCardProps) {
   });
 
   const submit = handleSubmit(async (values) => {
-    await onSearch(values);
+    try {
+      await onSearch(values);
+    } catch (err) {
+      void err;
+    }
   });
 
   return (
