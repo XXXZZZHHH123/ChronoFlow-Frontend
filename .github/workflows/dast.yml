@@ -14,13 +14,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Build & serve the frontend
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
       - run: npm ci
       - run: npm run build
+
       - name: Start preview server (5173)
         run: |
           npx vite preview --host 127.0.0.1 --port 5173 --strictPort &
@@ -28,22 +28,22 @@ jobs:
       - name: Wait for frontend
         run: npx wait-on http-get://127.0.0.1:5173
 
-      # Avoid 'Permission denied' when ZAP writes temp files into mounted workspace
       - name: Relax workspace perms for ZAP container
         run: chmod -R a+w .
 
-      # Baseline scan (Docker runs with --network=host on Linux -> use 127.0.0.1)
+      # Let the scan run; don't fail the job if the ACTION's artifact upload chokes.
       - name: OWASP ZAP Baseline Scan
         uses: zaproxy/action-baseline@v0.10.0
+        continue-on-error: true
         with:
           target: "http://127.0.0.1:5173"
-          rules_file_name: ".zap/rules.tsv"          # ← uses your policy
+          rules_file_name: ".zap/rules.tsv"
           cmd_options: "-j -m 5"
-          fail_action: false                         # ← don't fail CI on WARNs for preview
-          allow_issue_writing: false                 # avoid GitHub permission errors
-          artifact_name: "zap-baseline-${{ github.run_id }}"  # ← valid artifact name
+          fail_action: false
+          allow_issue_writing: false
+          # artifact_name: "zap-baseline-${{ github.run_id }}"  # optional; may still trigger their upload bug
 
-      # Optionally also upload the reports we know the action creates
+      # Our upload (works even if the step above errors)
       - name: Upload ZAP report
         if: always()
         uses: actions/upload-artifact@v4
