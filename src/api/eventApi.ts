@@ -1,6 +1,7 @@
 import { http } from "@/lib/http";
 import { unwrap } from "@/lib/utils";
 import {
+  OrgEventSchema,
   OrgEventsResponseSchema,
   type EventConfig,
   type OrgEvent,
@@ -10,6 +11,12 @@ export async function getEvents(): Promise<OrgEvent[]> {
   const res = await http.get("/system/events");
   const raw = unwrap<OrgEvent[]>(res.data);
   return OrgEventsResponseSchema.parse(raw);
+}
+
+export async function getEventById(id: string | number): Promise<OrgEvent> {
+  const res = await http.get(`/system/events/${id}`);
+  const raw = unwrap(res.data);
+  return OrgEventSchema.parse(raw);
 }
 
 const toUtcNoMillis = (d: Date) => d.toISOString().replace(/\.\d{3}Z$/, "Z");

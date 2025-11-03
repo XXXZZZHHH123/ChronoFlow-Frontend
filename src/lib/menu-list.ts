@@ -1,9 +1,9 @@
 import {
   CalendarDays,
   Users,
-  LayoutDashboard,
   ListChecks,
   Building2,
+  UserRoundPlus,
   type LucideIcon,
 } from "lucide-react";
 
@@ -70,23 +70,12 @@ export function getMenuList(
   }
 
   const base = `/event/${selectedEventId}`;
-  const dashboardPath = `${base}/dashboard`;
   const groupPath = `${base}/groups`;
   const taskPath = `${base}/tasks`;
+  const attendeePath = `${base}/attendees`;
+  const checkinPath = `${base}/checkin`;
 
   return [
-    {
-      groupLabel: "Event Dashboard",
-      menus: [
-        {
-          href: dashboardPath,
-          label: "Overview",
-          active: pathname === dashboardPath,
-          submenus: [],
-          icon: LayoutDashboard,
-        },
-      ],
-    },
     {
       groupLabel: "Event Management",
       menus: [
@@ -103,6 +92,25 @@ export function getMenuList(
           active: pathname === taskPath,
           submenus: [],
           icon: ListChecks,
+        },
+      ],
+    },
+    {
+      groupLabel: "Attendee Management",
+      menus: [
+        {
+          href: attendeePath,
+          label: "Attendees",
+          active: pathname === attendeePath,
+          submenus: [],
+          icon: UserRoundPlus,
+        },
+        {
+          href: checkinPath,
+          label: "Check-in",
+          active: pathname === checkinPath,
+          submenus: [],
+          icon: Users,
         },
       ],
     },

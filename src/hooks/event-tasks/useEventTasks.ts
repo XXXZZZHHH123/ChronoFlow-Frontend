@@ -1,6 +1,6 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import type { EventTask } from "@/lib/validation/schema";
+import { useCallback, useEffect, useState } from "react";
 import { getEventTasks } from "@/api/eventTasksApi";
+import type { EventTask } from "@/lib/validation/schema";
 
 export type UseEventTasksType = {
   tasks: EventTask[];
@@ -13,31 +13,34 @@ export function useEventTasks(
   eventId: string | null,
   autoFetch: boolean = false
 ): UseEventTasksType {
-  const queryClient = useQueryClient();
+  const [tasks, setTasks] = useState<EventTask[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const query = useQuery<EventTask[], Error>({
-    queryKey: ["eventTasks", eventId],
-    queryFn: () => {
-      if (!eventId) return Promise.resolve([]);
-      return getEventTasks(eventId);
-    },
-    enabled: autoFetch && !!eventId,
-    staleTime: Infinity,
-    gcTime: 30 * 60 * 1000,
-    refetchOnMount: true,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-  });
+  const fetchTasks = useCallback(async () => {
+    if (!eventId) {
+      setTasks([]);
+      setError("No event selected");
+      return;
+    }
 
-  const onRefresh = async () => {
-    if (!eventId) return;
-    await queryClient.invalidateQueries({ queryKey: ["eventTasks", eventId] });
-  };
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await getEventTasks(eventId);
+      setTasks(data);
+    } catch (e: unknown) {
+      if (e instanceof Error) setError(e.message);
+      else setError("Failed to load tasks");
+      setTasks([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [eventId]);
 
-  return {
-    tasks: query.data ?? [],
-    loading: query.isLoading || query.isFetching,
-    error: query.error ? query.error.message : null,
-    onRefresh,
-  };
+  useEffect(() => {
+    if (autoFetch && eventId) void fetchTasks();
+  }, [autoFetch, eventId, fetchTasks]);
+
+  return { tasks, loading, error, onRefresh: fetchTasks };
 }

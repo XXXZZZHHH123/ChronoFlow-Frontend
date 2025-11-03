@@ -1,9 +1,7 @@
-import { type PropsWithChildren } from "react";
-
-export function TaskBoard({ children }: PropsWithChildren) {
+export function TaskBoard({ children }: { children: React.ReactNode }) {
   return (
-    <div className="w-full overflow-x-auto">
-      <div className="flex gap-4 pb-4">{children}</div>
+    <div className="flex items-start gap-4 overflow-x-auto pb-4">
+      {children}
     </div>
   );
 }

@@ -6,7 +6,7 @@ export function GoToEventButton({ id }: { id: string }) {
   const navigate = useNavigate();
 
   const onOpen = () => {
-    navigate(`/event/${id}/dashboard`);
+    navigate(`/event/${id}/tasks`);
   };
 
   return (
