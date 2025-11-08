@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test.use({ baseURL: process.env.VITE_TESTING_SERVER || process.env.BASE_URL });
+test.use({ baseURL: process.env.VITE_TESTING_SERVER || process.env.BASE_URL || 'https://chronoflow-frontend-testing.up.railway.app' });
 
 const VALID_USER   = process.env.E2E_USER_LOGIN ?? "davidiss";
 const VALID_PASS   = process.env.E2E_USER_PASSWORD ?? "daviss123";

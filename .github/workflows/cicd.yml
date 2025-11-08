@@ -280,8 +280,6 @@ jobs:
     env:
       BASE_URL: ${{ vars.E2E_BASE_URL || 'https://chronoflow-frontend-testing.up.railway.app' }}
       CI: true
-      E2E_USER_LOGIN:  ${{ vars.E2E_USER_LOGIN || 'lushuwen' }}
-      E2E_USER_PASSWORD: ${{ vars.E2E_USER_PASSWORD || 'lushuwen' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
