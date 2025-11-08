@@ -277,13 +277,6 @@ jobs:
         (github.event_name == 'push' && github.ref == 'refs/heads/test') ||
         (github.event_name == 'pull_request' && github.base_ref == 'test')
       )
-        
-    env:
-      BASE_URL: ${{ secrets.E2E_BASE_URL }}
-      VITE_TESTING_SERVER: ${{ secrets.E2E_BASE_URL }}
-      E2E_USER_LOGIN: ${{ secrets.E2E_USER_LOGIN }}
-      E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD }}
-      CI: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
