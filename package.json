@@ -11,9 +11,15 @@
     "lint:pretty": "eslint --ext .ts,.tsx src --format stylish",
     "typecheck": "tsc --noEmit",
     "preview": "vite preview",
-    "test": "vitest",
-    "test:watch": "vitest",
-    "test:ci": "vitest run --coverage --reporter=dot",
+
+    "test": "npm run test:unit",
+    "test:watch": "vitest --watch --exclude='src/test/e2e/**' --exclude='e2e/**' --exclude='**/*.e2e.*'",
+    "test:unit": "vitest run --exclude='src/test/e2e/**' --exclude='e2e/**' --exclude='**/*.e2e.*'",
+    "test:ci:unit": "vitest run --coverage --reporter=dot --exclude='src/test/e2e/**' --exclude='e2e/**' --exclude='**/*.e2e.*'",
+    "test:e2e": "playwright test",
+    "test:ci:e2e": "playwright test --reporter=line",
+    "test:ci": "npm run test:ci:unit && npm run test:ci:e2e",
+
     "sast": "semgrep --config p/typescript --config p/react --error",
     "sca": "npm audit --json > audit.json || true; node scripts/check-vulns.js"
   },
