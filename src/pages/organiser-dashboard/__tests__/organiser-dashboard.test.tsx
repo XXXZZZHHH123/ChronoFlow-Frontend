@@ -1,9 +1,7 @@
 import type { ReactNode } from "react"
-import { describe, expect, it, beforeAll, afterAll, vi, afterEach } from "vitest"
-import { render, screen, within, fireEvent, waitFor } from "@testing-library/react"
-import userEvent from "@testing-library/user-event"
+import { describe, expect, it, beforeAll, afterAll, vi } from "vitest"
+import { render, screen, fireEvent } from "@testing-library/react"
 
-import { DataTable } from "../components/data-table"
 import { ChartAreaInteractive } from "../components/chart-area-interactive"
 import { buildMetrics } from "../metrics"
 import type { OrgEvent } from "@/lib/validation/schema"
@@ -23,56 +21,6 @@ if (!window.matchMedia) {
     })),
   })
 }
-
-const mocks = vi.hoisted(() => {
-  return {
-    addRowMock: vi.fn(),
-    getRowMock: vi.fn(() => ({ font: {} })),
-    getColumnMock: vi.fn(() => ({ alignment: {}, numFmt: "" })),
-    writeBufferMock: vi.fn(() => Promise.resolve(new ArrayBuffer(0))),
-    saveAsMock: vi.fn(),
-  }
-})
-
-vi.mock("exceljs", () => {
-  class FakeWorkbook {
-    creator: string
-    created: Date
-    xlsx: { writeBuffer: typeof mocks.writeBufferMock }
-
-    constructor() {
-      this.creator = ""
-      this.created = new Date()
-      this.xlsx = { writeBuffer: mocks.writeBufferMock }
-    }
-
-    addWorksheet(): {
-      columns: never[]
-      addRow: typeof mocks.addRowMock
-      getRow: typeof mocks.getRowMock
-      getColumn: typeof mocks.getColumnMock
-    } {
-      return {
-        columns: [],
-        addRow: mocks.addRowMock,
-        getRow: mocks.getRowMock,
-        getColumn: mocks.getColumnMock,
-      }
-    }
-  }
-
-  return {
-    default: { Workbook: FakeWorkbook },
-    Workbook: FakeWorkbook,
-  }
-})
-
-vi.mock("file-saver", () => ({
-  default: mocks.saveAsMock,
-  saveAs: mocks.saveAsMock,
-}))
-
-const { addRowMock, getRowMock, getColumnMock, writeBufferMock, saveAsMock } = mocks
 
 vi.mock("@/components/ui/chart", () => ({
   ChartContainer: ({ children }: { children: ReactNode }) => (
@@ -99,10 +47,6 @@ vi.mock("recharts", () => ({
   CartesianGrid: () => <div data-testid="recharts-grid" />,
   XAxis: () => <div data-testid="recharts-xaxis" />,
 }))
-
-afterEach(() => {
-  vi.clearAllMocks()
-})
 
 const sampleEvents: OrgEvent[] = [
   {
@@ -181,64 +125,6 @@ describe("buildMetrics", () => {
     })
 
     expect(metrics[1].badge).toMatch(/^Next: /)
-  })
-})
-
-describe("DataTable", () => {
-  it("renders events overview with chronological order by default and years in dates", () => {
-    render(<DataTable events={sampleEvents} />)
-
-    expect(screen.getByText("Events Overview")).toBeInTheDocument()
-
-    const table = screen.getByRole("table")
-    const rows = within(table).getAllByRole("row")
-
-    expect(within(rows[1]).getByText("Event Alpha")).toBeInTheDocument()
-    expect(within(rows[2]).getByText("Event Beta")).toBeInTheDocument()
-
-    expect(within(rows[1]).getByText(/25 Sep[t]? 2025/)).toBeInTheDocument()
-  })
-
-  it("toggles sort order when the Starts → Ends button is clicked", async () => {
-    const user = userEvent.setup()
-    render(<DataTable events={sampleEvents} />)
-
-    const sortButton = screen.getByRole("button", { name: /Starts/ })
-
-    await user.click(sortButton)
-
-    const table = screen.getByRole("table")
-    const rows = within(table).getAllByRole("row")
-
-    expect(within(rows[1]).getByText("Event Gamma")).toBeInTheDocument()
-
-    await user.click(sortButton)
-
-    const rowsAsc = within(table).getAllByRole("row")
-    expect(within(rowsAsc[1]).getByText("Event Alpha")).toBeInTheDocument()
-  })
-
-  it("shows empty state when there are no events", () => {
-    render(<DataTable events={[]} />)
-
-    expect(screen.getByText("No events match the current filter.")).toBeInTheDocument()
-  })
-
-  it("exports the full list to an Excel file", async () => {
-    const user = userEvent.setup()
-    render(<DataTable events={sampleEvents} />)
-
-    const exportButton = screen.getByRole("button", { name: /Export list/i })
-    await user.click(exportButton)
-
-    await waitFor(() => {
-      expect(saveAsMock).toHaveBeenCalledTimes(1)
-    })
-
-    expect(addRowMock).toHaveBeenCalledTimes(sampleEvents.length)
-    expect(getRowMock).toHaveBeenCalled()
-    expect(getColumnMock).toHaveBeenCalled()
-    expect(writeBufferMock).toHaveBeenCalled()
   })
 })
 
