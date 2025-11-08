@@ -1,3 +1,6 @@
+/**
+ * @vitest-environment jsdom
+ */
 import {
   TaskStatusEnum,
   TaskActionEnum,
@@ -16,9 +19,38 @@ import {
   formatDT,
   formatFileBytes,
   actionsThatAllowFiles,
+  type TaskStatusCode,
+  type TaskStatusEnumType,
 } from "@/services/eventTask";
+import type {
+  EventTask,
+  EventGroupWithAssignableMembers,
+  EventTaskCreateConfig,
+  EventTaskConfig,
+} from "@/lib/validation/schema";
+import { describe, it, expect, beforeAll } from "vitest";
 
-import { describe, it, expect } from "vitest";
+type GlobalWithFile = typeof globalThis & { File?: typeof File };
+
+beforeAll(() => {
+  const withFile = globalThis as GlobalWithFile;
+  if (typeof withFile.File === "undefined") {
+    class PolyfillFile extends Blob {
+      name: string;
+      lastModified: number;
+      constructor(
+        bits: BlobPart[],
+        name: string,
+        options?: { type?: string; lastModified?: number }
+      ) {
+        super(bits, options);
+        this.name = name;
+        this.lastModified = options?.lastModified ?? Date.now();
+      }
+    }
+    withFile.File = PolyfillFile as unknown as typeof File;
+  }
+});
 
 const pad = (n: number) => String(n).padStart(2, "0");
 const fmtLocal = (d: Date) =>
@@ -26,11 +58,48 @@ const fmtLocal = (d: Date) =>
     d.getHours()
   )}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 
+const baseUser = {
+  id: "user-id",
+  name: "User Name",
+  email: "user@example.com",
+  phone: null,
+  groups: [{ id: "g1", name: "Ops" }],
+};
+
+function buildTask(overrides: Partial<EventTask> = {}): EventTask {
+  const now = new Date().toISOString();
+  return {
+    id: "task-id",
+    name: "Task Name",
+    description: null,
+    status: TaskStatusEnum.PENDING,
+    startTime: now,
+    endTime: now,
+    createTime: now,
+    updateTime: now,
+    remark: null,
+    assignerUser: {
+      ...baseUser,
+      ...(overrides.assignerUser ?? {}),
+      groups: overrides.assignerUser?.groups ?? baseUser.groups,
+    },
+    assignedUser: overrides.assignedUser ?? {
+      ...baseUser,
+      id: "assignee-id",
+      name: "Assignee Name",
+      groups: baseUser.groups,
+    },
+    ...overrides,
+  };
+}
+
 describe("status helpers", () => {
   it("getTaskStatusText returns friendly text and Unknown for null/unknown", () => {
     expect(getTaskStatusText(TaskStatusEnum.PENDING)).toBe("Pending");
     expect(getTaskStatusText(TaskStatusEnum.IN_PROGRESS)).toBe("In Progress");
-    expect(getTaskStatusText(99 as any)).toBe("Unknown");
+    expect(
+      getTaskStatusText(99 as unknown as TaskStatusCode)
+    ).toBe("Unknown");
     expect(getTaskStatusText(null)).toBe("Unknown");
     expect(getTaskStatusText(undefined)).toBe("Unknown");
   });
@@ -40,7 +109,9 @@ describe("status helpers", () => {
       theme: expect.stringContaining("green"),
       dot: expect.stringContaining("green"),
     });
-    expect(getTaskStatusStyle(123 as any)).toMatchObject({
+    expect(
+      getTaskStatusStyle(123 as unknown as TaskStatusCode)
+    ).toMatchObject({
       theme: expect.stringContaining("zinc"),
       dot: expect.stringContaining("zinc"),
     });
@@ -49,11 +120,7 @@ describe("status helpers", () => {
 
 describe("board categorization", () => {
   const makeTask = (id: string, status: number) =>
-    ({
-      id,
-      name: id,
-      status,
-    } as any);
+    buildTask({ id, name: id, status });
 
   it("splits tasks into buckets and ignores unknown status", () => {
     const tasks = [
@@ -64,49 +131,49 @@ describe("board categorization", () => {
       makeTask("t4", 4),
       makeTask("t5", 5),
       makeTask("t6", 6),
-      makeTask("tx", 99 as any),
+      makeTask("tx", 99),
     ];
-    const b = categorizeTasksForBoard(tasks as any);
+    const buckets = categorizeTasksForBoard(tasks);
 
-    expect(b.pending.map((t) => t.id)).toEqual(["t0"]);
-    expect(b.progress.map((t) => t.id)).toEqual(["t1"]);
-    expect(b.completed.map((t) => t.id)).toEqual(["t2"]);
-    expect(b.delayed.map((t) => t.id)).toEqual(["t3"]);
-    expect(b.blocked.map((t) => t.id)).toEqual(["t4"]);
-    expect(b.pendingApproval.map((t) => t.id)).toEqual(["t5"]);
-    expect(b.rejected.map((t) => t.id)).toEqual(["t6"]);
+    expect(buckets.pending.map((t) => t.id)).toEqual(["t0"]);
+    expect(buckets.progress.map((t) => t.id)).toEqual(["t1"]);
+    expect(buckets.completed.map((t) => t.id)).toEqual(["t2"]);
+    expect(buckets.delayed.map((t) => t.id)).toEqual(["t3"]);
+    expect(buckets.blocked.map((t) => t.id)).toEqual(["t4"]);
+    expect(buckets.pendingApproval.map((t) => t.id)).toEqual(["t5"]);
+    expect(buckets.rejected.map((t) => t.id)).toEqual(["t6"]);
   });
 });
 
 describe("task filters", () => {
-  const tasks: any[] = [
-    {
+  const tasks: EventTask[] = [
+    buildTask({
       id: "a",
-      assignedUser: { id: "U1" },
-      assignerUser: { id: "U2" },
-    },
-    {
+      assignedUser: { ...baseUser, id: "U1" },
+      assignerUser: { ...baseUser, id: "U2" },
+    }),
+    buildTask({
       id: "b",
-      assignedUser: { id: "U2" },
-      assignerUser: { id: "U1" },
-    },
-    {
+      assignedUser: { ...baseUser, id: "U2" },
+      assignerUser: { ...baseUser, id: "U1" },
+    }),
+    buildTask({
       id: "c",
-      assignedUser: null,
-      assignerUser: null,
-    },
+      assignedUser: undefined,
+      assignerUser: undefined,
+    }),
   ];
 
   it("filterMyTasks keeps tasks where I'm the assignee", () => {
-    expect(filterMyTasks(tasks as any, "U1").map((t) => t.id)).toEqual(["a"]);
-    expect(filterMyTasks(tasks as any, "U2").map((t) => t.id)).toEqual(["b"]);
+    expect(filterMyTasks(tasks, "U1").map((t) => t.id)).toEqual(["a"]);
+    expect(filterMyTasks(tasks, "U2").map((t) => t.id)).toEqual(["b"]);
   });
 
   it("filterMyAssignedTasks keeps tasks where I'm the assigner", () => {
-    expect(filterMyAssignedTasks(tasks as any, "U1").map((t) => t.id)).toEqual([
+    expect(filterMyAssignedTasks(tasks, "U1").map((t) => t.id)).toEqual([
       "b",
     ]);
-    expect(filterMyAssignedTasks(tasks as any, "U2").map((t) => t.id)).toEqual([
+    expect(filterMyAssignedTasks(tasks, "U2").map((t) => t.id)).toEqual([
       "a",
     ]);
   });
@@ -160,19 +227,19 @@ describe("status UX messages", () => {
   });
 
   it("returns null for unrecognized status codes", () => {
-    expect(getStatusUX(777 as any, true)).toBeNull();
-    expect(getStatusUX(888 as any, false)).toBeNull();
+    expect(
+      getStatusUX(777 as unknown as TaskStatusEnumType, true)
+    ).toBeNull();
+    expect(
+      getStatusUX(888 as unknown as TaskStatusEnumType, false)
+    ).toBeNull();
   });
 });
 
 describe("action options", () => {
   it("assigner: PENDING has Update/Delete/Reassign", () => {
     const opts = getActionOptionsForStatus(TaskStatusEnum.PENDING, true);
-    expect(opts.map((o) => o.label)).toEqual([
-      "Update",
-      "Delete",
-      "Reassign",
-    ]);
+    expect(opts.map((o) => o.label)).toEqual(["Update", "Delete", "Reassign"]);
     expect(opts.map((o) => o.value)).toEqual([
       TaskActionEnum.UPDATE,
       TaskActionEnum.DELETE,
@@ -223,11 +290,7 @@ describe("action options", () => {
 
   it("assigner: BLOCKED has Update/Delete/Reassign", () => {
     const opts = getActionOptionsForStatus(TaskStatusEnum.BLOCKED, true);
-    expect(opts.map((o) => o.label)).toEqual([
-      "Update",
-      "Delete",
-      "Reassign",
-    ]);
+    expect(opts.map((o) => o.label)).toEqual(["Update", "Delete", "Reassign"]);
     expect(opts.map((o) => o.value)).toEqual([
       TaskActionEnum.UPDATE,
       TaskActionEnum.DELETE,
@@ -237,11 +300,7 @@ describe("action options", () => {
 
   it("assigner: REJECTED has Update/Reassign/Delete", () => {
     const opts = getActionOptionsForStatus(TaskStatusEnum.REJECTED, true);
-    expect(opts.map((o) => o.label)).toEqual([
-      "Update",
-      "Reassign",
-      "Delete",
-    ]);
+    expect(opts.map((o) => o.label)).toEqual(["Update", "Reassign", "Delete"]);
     expect(opts.map((o) => o.value)).toEqual([
       TaskActionEnum.UPDATE,
       TaskActionEnum.ASSIGN,
@@ -300,15 +359,20 @@ describe("action options", () => {
   });
 
   it("unknown status yields empty array", () => {
-    expect(getActionOptionsForStatus(999 as any, true)).toEqual([]);
-    expect(getActionOptionsForStatus(999 as any, false)).toEqual([]);
+    expect(
+      getActionOptionsForStatus(999 as unknown as TaskStatusEnumType, true)
+    ).toEqual([]);
+    expect(
+      getActionOptionsForStatus(999 as unknown as TaskStatusEnumType, false)
+    ).toEqual([]);
   });
 });
 
 describe("assignable members options", () => {
   it("dedupes members across groups and annotates with group name", () => {
-    const groups: any = [
+    const groups: EventGroupWithAssignableMembers[] = [
       {
+        id: "g-ops",
         name: "Ops",
         members: [
           { id: "m1", username: "alice" },
@@ -316,9 +380,10 @@ describe("assignable members options", () => {
         ],
       },
       {
+        id: "g-log",
         name: "Logistics",
         members: [
-          { id: "m2", username: "bob" }, // duplicate
+          { id: "m2", username: "bob" },
           { id: "m3", username: "carol" },
         ],
       },
@@ -326,7 +391,7 @@ describe("assignable members options", () => {
     const opts = getAssignableMembersOptions(groups);
     expect(opts).toEqual([
       { id: "m1", label: "alice (Ops)" },
-      { id: "m2", label: "bob (Ops)" }, // first time seen
+      { id: "m2", label: "bob (Ops)" },
       { id: "m3", label: "carol (Logistics)" },
     ]);
   });
@@ -339,53 +404,64 @@ describe("form-data builders", () => {
     const f1 = new File([new Blob(["x"])], "a.txt", { type: "text/plain" });
     const f2 = new File([new Blob(["y"])], "b.md", { type: "text/markdown" });
 
-    const fd = buildTaskCreateFormData({
+    const payload: EventTaskCreateConfig = {
       name: "Task A",
-      targetUserId: 123,
+      targetUserId: "123",
       description: "desc",
       remark: "note",
       startTime: start,
       endTime: end,
       files: [f1, f2],
-    } as any);
+    };
 
-    const entries = Array.from(fd.entries());
-    expect(entries).toContainEqual(["name", "Task A"]);
-    expect(entries).toContainEqual(["targetUserId", "123"]);
-    expect(entries).toContainEqual(["description", "desc"]);
-    expect(entries).toContainEqual(["remark", "note"]);
-    expect(entries).toContainEqual(["startTime", fmtLocal(start)]);
-    expect(entries).toContainEqual(["endTime", fmtLocal(end)]);
+    const fd = buildTaskCreateFormData(payload);
 
-    const fileNames = entries
-      .filter(([k]) => k === "files")
-      .map(([, v]) => (v as File).name);
+    expect(fd.get("name")).toBe("Task A");
+    expect(fd.get("targetUserId")).toBe("123");
+    expect(fd.get("description")).toBe("desc");
+    expect(fd.get("remark")).toBe("note");
+    expect(fd.get("startTime")).toBe(fmtLocal(start));
+    expect(fd.get("endTime")).toBe(fmtLocal(end));
+
+    const files = fd.getAll("files");
+    const fileNames = files.map((item) =>
+      item instanceof File ? item.name : ""
+    );
     expect(fileNames).toEqual(["a.txt", "b.md"]);
   });
 
   it("buildTaskConfigFormData appends only provided fields and coerces types", () => {
     const start = new Date(2024, 6, 1, 9, 10, 11);
 
-    const fd = buildTaskConfigFormData({
+    const payload: EventTaskConfig = {
       name: "X",
       description: undefined,
       type: TaskActionEnum.SUBMIT,
-      targetUserId: 987,
+      targetUserId: "987",
       startTime: start,
       remark: "r",
-    } as any);
+    };
 
-    const entries = Array.from(fd.entries());
-    expect(entries).toContainEqual(["name", "X"]);
-    expect(entries).toContainEqual(["type", String(TaskActionEnum.SUBMIT)]);
-    expect(entries).toContainEqual(["targetUserId", "987"]);
-    expect(entries).toContainEqual(["startTime", fmtLocal(start)]);
-    expect(entries).toContainEqual(["remark", "r"]);
+    const fd = buildTaskConfigFormData(payload);
 
-    // should NOT include description or endTime when absent
-    const keys = entries.map(([k]) => k);
-    expect(keys).not.toContain("description");
-    expect(keys).not.toContain("endTime");
+    expect(fd.get("name")).toBe("X");
+    expect(fd.get("type")).toBe(String(TaskActionEnum.SUBMIT));
+    expect(fd.get("targetUserId")).toBe("987");
+    expect(fd.get("startTime")).toBe(fmtLocal(start));
+    expect(fd.get("remark")).toBe("r");
+
+    const hasKeys = typeof (fd as FormData & { keys?: () => IterableIterator<string> }).keys === "function";
+
+    if (hasKeys) {
+      const keys = Array.from(
+        (fd as FormData & { keys: () => IterableIterator<string> }).keys()
+      );
+      expect(keys).not.toContain("description");
+      expect(keys).not.toContain("endTime");
+    } else {
+      expect(fd.get("description")).toBeNull();
+      expect(fd.get("endTime")).toBeNull();
+    }
   });
 });
 
@@ -406,8 +482,8 @@ describe("action meta & formatting helpers", () => {
   it("formatFileBytes handles units and non-finite", () => {
     expect(formatFileBytes(500)).toBe("500 bytes");
     expect(formatFileBytes(1536)).toBe("1.5 KB");
-    expect(formatFileBytes(1048576)).toBe("1.0 MB");
-    expect(formatFileBytes(Infinity as any)).toBe("Infinity bytes");
+    expect(formatFileBytes(1_048_576)).toBe("1.0 MB");
+    expect(formatFileBytes(Number.POSITIVE_INFINITY)).toBe("Infinity bytes");
   });
 
   it("actionsThatAllowFiles contains SUBMIT and BLOCK only (sample checks)", () => {
