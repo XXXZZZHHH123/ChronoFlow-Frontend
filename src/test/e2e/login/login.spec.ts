@@ -1,17 +1,19 @@
 import { test, expect } from '@playwright/test';
 
-test.use({ baseURL: process.env.VITE_TESTING_SERVER || process.env.BASE_URL || 'https://chronoflow-frontend-testing.up.railway.app' });
+// Resolve once, with a safe default
+const BASE =
+  process.env.VITE_TESTING_SERVER ||
+  process.env.BASE_URL ||
+  'https://chronoflow-frontend-testing.up.railway.app';
 
-const VALID_USER   = process.env.E2E_USER_LOGIN ?? "davidiss";
-const VALID_PASS   = process.env.E2E_USER_PASSWORD ?? "daviss123";
-const INVALID_PASS = process.env.E2E_BAD_PASSWORD ?? "wrong-password";
+test.use({ baseURL: BASE });
 
-test.beforeEach(async ({ page, baseURL }) => {
-  if (!baseURL) throw new Error(
-    'baseURL missing. export VITE_TESTING_SERVER=https://chronoflow-frontend-testing.up.railway.app'
-  );
-  await page.goto('/login', { waitUntil: 'networkidle' });
-  // Robust sentinel elements instead of heading role:
+const VALID_USER   = process.env.E2E_USER_LOGIN    ?? 'davidiss';
+const VALID_PASS   = process.env.E2E_USER_PASSWORD ?? 'daviss123';
+const INVALID_PASS = process.env.E2E_BAD_PASSWORD  ?? 'wrong-password';
+
+test.beforeEach(async ({ page }) => {
+  await page.goto('/login', { waitUntil: 'domcontentloaded' });
   await expect(page.locator('#username')).toBeVisible();
   await expect(page.locator('#password')).toBeVisible();
   await expect(page.getByRole('button', { name: /^login$/i })).toBeVisible();
@@ -20,11 +22,8 @@ test.beforeEach(async ({ page, baseURL }) => {
 test.describe('Login', () => {
   test('unhappy: client-side validation on empty submit', async ({ page }) => {
     await page.getByRole('button', { name: /^login$/i }).click();
-
     await expect(page.locator('#username')).toHaveAttribute('aria-invalid', 'true');
     await expect(page.locator('#password')).toHaveAttribute('aria-invalid', 'true');
-
-    // At least one visible validation message (message text may vary)
     await expect(page.locator('p.text-sm.text-destructive').first()).toBeVisible();
   });
 
@@ -33,7 +32,6 @@ test.describe('Login', () => {
     await page.locator('#password').fill(INVALID_PASS);
     await page.getByRole('button', { name: /^login$/i }).click();
 
-    // SweetAlert2 is deterministic:
     const popup = page.locator('.swal2-popup');
     await expect(popup).toBeVisible();
     await expect(popup).toContainText(/login failed/i);
@@ -43,7 +41,6 @@ test.describe('Login', () => {
   });
 
   test('happy: correct credentials redirect to /events and remember is persisted', async ({ page }) => {
-    // ShadCN/Radix checkbox: click by id and assert aria-checked
     const remember = page.locator('#remember');
     await remember.click();
     await expect(remember).toHaveAttribute('aria-checked', 'true');
@@ -53,8 +50,6 @@ test.describe('Login', () => {
     await page.getByRole('button', { name: /^login$/i }).click();
 
     await expect(page).toHaveURL(/\/events/);
-
-    // localStorage flag after successful login
     await expect
       .poll(() => page.evaluate(() => localStorage.getItem('cf.remember')))
       .toBe('1');
