@@ -2,8 +2,8 @@ import { test, expect } from '@playwright/test';
 
 test.use({ baseURL: process.env.VITE_TESTING_SERVER || process.env.BASE_URL });
 
-const VALID_USER   = process.env.E2E_USER_LOGIN ?? "abc";
-const VALID_PASS   = process.env.E2E_USER_PASSWORD ?? "def";
+const VALID_USER   = process.env.E2E_USER_LOGIN ?? "davidiss";
+const VALID_PASS   = process.env.E2E_USER_PASSWORD ?? "daviss123";
 const INVALID_PASS = process.env.E2E_BAD_PASSWORD ?? "wrong-password";
 
 test.beforeEach(async ({ page, baseURL }) => {
