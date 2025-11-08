@@ -47,9 +47,9 @@ vi.mock("@/components/ui/popover", () => {
 });
 vi.mock("@/components/ui/command", () => {
   const Wrapper = ({ children }: PropsWithChildren) => <div>{children}</div>;
-  const CommandInput = (props: React.InputHTMLAttributes<HTMLInputElement>) => (
-    <input aria-label="search" {...props} />
-  );
+  const CommandInput = (
+    props: React.InputHTMLAttributes<HTMLInputElement>
+  ) => <input aria-label="search" {...props} />;
   type CommandItemProps = {
     children: React.ReactNode;
     onSelect?: (value: string) => void;
@@ -107,6 +107,7 @@ vi.mock("@/components/ui/dialog", () => {
     );
   }
 
+
   type DialogContentProps = React.HTMLAttributes<HTMLDivElement>;
   function DialogContent(props: DialogContentProps) {
     const ctx = React.useContext(DialogCtx);
@@ -114,16 +115,33 @@ vi.mock("@/components/ui/dialog", () => {
     return <div {...props} />;
   }
 
+  function DialogTrigger({ children }: { children: ReactElement }) {
+    const ctx = React.useContext(DialogCtx);
+    if (!ctx) return children;
+    const child = React.Children.only(children) as React.ReactElement<{ onClick?: (...args: unknown[]) => void }>;
+    const originalOnClick =
+      child.props?.onClick ?? (() => undefined as void | undefined);
+    return React.cloneElement(child, {
+      onClick: (...args: unknown[]) => {
+        originalOnClick(...args);
+        ctx.setOpen(true);
+      },
+    });
+  }
+
   const DialogHeader = ({ children }: PropsWithChildren) => (
     <div>{children}</div>
   );
-  const DialogTitle = ({ children }: PropsWithChildren) => <h2>{children}</h2>;
+  const DialogTitle = ({ children }: PropsWithChildren) => (
+    <h2>{children}</h2>
+  );
   const DialogDescription = ({ children }: PropsWithChildren) => (
     <p>{children}</p>
   );
 
   return {
     Dialog,
+    DialogTrigger,
     DialogContent,
     DialogHeader,
     DialogTitle,
@@ -140,9 +158,7 @@ vi.mock("../AttachmentField", () => {
 });
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-function setup(
-  overrides: Partial<React.ComponentProps<typeof TaskReassignModal>> = {}
-) {
+function setup(overrides: Partial<React.ComponentProps<typeof TaskReassignModal>> = {}) {
   const props: React.ComponentProps<typeof TaskReassignModal> = {
     eventId: "evt-1",
     taskId: "task-1",
@@ -160,8 +176,7 @@ function setup(
 }
 
 const getTrigger = () => screen.getByRole("button", { name: /^reassign$/i });
-const getSubmit = () =>
-  screen.getByRole("button", { name: /^confirm reassign$/i });
+const getSubmit = () => screen.getByRole("button", { name: /^confirm reassign$/i });
 const getAssigneePicker = () =>
   screen.getByRole("button", { name: /select assignee/i }); // allows the … variant
 
@@ -175,9 +190,7 @@ describe("TaskReassignModal", () => {
   });
 
   it("resets form on close and re-open (empty selection, initial remark)", async () => {
-    setup({
-      initial: { targetUserId: "u1", taskName: "Task X", remark: "Init R" },
-    });
+    setup({ initial: { targetUserId: "u1", taskName: "Task X", remark: "Init R" } });
 
     // open -> pick -> submit (success closes dialog)
     await user.click(getTrigger());
@@ -185,15 +198,11 @@ describe("TaskReassignModal", () => {
     await user.click(screen.getByRole("button", { name: "Bob (Group B)" }));
     await user.click(getSubmit());
     // dialog content hidden after close
-    expect(
-      screen.queryByRole("heading", { name: /reassign task/i })
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: /reassign task/i })).not.toBeInTheDocument();
 
     // reopen
     await user.click(getTrigger());
-    expect(
-      screen.getByRole("heading", { name: /reassign task/i })
-    ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /reassign task/i })).toBeInTheDocument();
 
     // selection back to placeholder
     expect(getAssigneePicker()).toBeInTheDocument();
