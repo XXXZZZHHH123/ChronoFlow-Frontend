@@ -10,9 +10,7 @@
   ],
   "compilerOptions": {
     "baseUrl": ".",
-    "types": ["vitest/globals"],
-    "paths": {
-      "@/*": ["./src/*"]
-    }
+    "paths": { "@/*": ["src/*"] },
+    "types": ["vitest/globals", "vite/client"]
   }
 }
