@@ -1,0 +1,20 @@
+# id<TAB>action<TAB>comment
+10040	FAIL	Mixed content
+10041	FAIL	HTTP->HTTPS form post
+10042	FAIL	HTTPS->HTTP form post
+10033	FAIL	Directory browsing
+10099	FAIL	Source code disclosure
+90022	FAIL	Application error disclosure
+10024	FAIL	Sensitive info in URL
+10025	FAIL	Sensitive info in Referrer
+10011	FAIL	Cookie without Secure (if app sets cookies)
+10010	FAIL	Cookie without HttpOnly (if app sets cookies)
+10054	FAIL	Cookie without SameSite (if app sets cookies)
+
+10038	WARN	CSP header not set (preview)
+10020	WARN	Anti-clickjacking header missing (preview)
+10021	WARN	X-Content-Type-Options missing (preview)
+10063	WARN	Permissions-Policy missing (preview)
+10027	WARN	Suspicious comments in bundle
+10049	WARN	Non-storable content
+90004	WARN	Spectre site isolation note
