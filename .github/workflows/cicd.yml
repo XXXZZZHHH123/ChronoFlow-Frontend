@@ -241,15 +241,31 @@ jobs:
         run: chmod -R a+w .
 
       - name: OWASP ZAP Baseline Scan
-        uses: zaproxy/action-baseline@v0.10.0
         continue-on-error: true
-        with:
-          target: "http://127.0.0.1:5173"
-          artifact_name: "zapscan"
-          rules_file_name: ".zap/rules.tsv"
-          cmd_options: "-j -m 5"
-          fail_action: false
-          allow_issue_writing: false
+        env:
+          TARGET_URL: "http://127.0.0.1:5173"
+        run: |
+          set -euo pipefail
+          docker pull ghcr.io/zaproxy/zaproxy:stable -q
+          set +e
+          docker run --rm \
+            -v "$PWD":/zap/wrk/:rw \
+            -w /zap/wrk \
+            --network host \
+            ghcr.io/zaproxy/zaproxy:stable \
+            zap-baseline.py \
+              -t "$TARGET_URL" \
+              -J report_json.json \
+              -w report_md.md \
+              -r report_html.html \
+              -j \
+              -m 5 \
+              -c ".zap/rules.tsv"
+          EXIT_CODE=$?
+          set -e
+          if [ "$EXIT_CODE" -ne 0 ]; then
+            echo "ZAP baseline exited with code $EXIT_CODE (ignored due to continue-on-error)" >&2
+          fi
     
       - name: Upload ZAP report
         if: always()
