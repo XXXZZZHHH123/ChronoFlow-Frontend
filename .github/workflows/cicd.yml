@@ -245,6 +245,7 @@ jobs:
         continue-on-error: true
         with:
           target: "http://127.0.0.1:5173"
+          artifact_name: "zap-scan-${{ github.run_id }}"
           rules_file_name: ".zap/rules.tsv"
           cmd_options: "-j -m 5"
           fail_action: false
